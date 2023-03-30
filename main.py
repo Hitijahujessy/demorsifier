@@ -41,27 +41,20 @@ MORSE_CODE_DICT = {'A': '.-', 'B': '-...',
                    '(': '-.--.', ')': '-.--.-', "'": '.----.',
                    '"': '.-..-.', '!': '-·-·--'}
 
-REVERSE_MORSE_DICT = {v: k for k, v in MORSE_CODE_DICT.items()}
-
-# threading multiprocessing
-
 
 class MainWidget(Widget):
-    morse_string = ObjectProperty()
-    text_string = ObjectProperty()
-    clipboard = ObjectProperty()
+    morse_string = ObjectProperty("")
+    text_string = ObjectProperty("")
+    clipboard = ObjectProperty("")
     loop = BooleanProperty(False)
     sound = BooleanProperty(True)
-    savefile = ObjectProperty(None)
     test_sound = ObjectProperty(None)
     downtime = NumericProperty(0)
-    wpm = NumericProperty(12)
     downtime_sum = NumericProperty(0)
     flashlight_color = ObjectProperty((0, 0, 0, 1))
 
     def __init__(self, **kwargs):
         super(MainWidget, self).__init__(**kwargs)
-        self.typewriter = Clock.create_trigger(self.type_morse, self.downtime)
         self.morse_loop = Clock.create_trigger(self.repeat, self.downtime)
         self.test_sound = Sound(" ", wpm=12)
         self.create_buttons()
@@ -92,7 +85,7 @@ class MainWidget(Widget):
                     else:
                         n += 1
                         if n > 6:
-                            print("n shouldnt be higher than 6, n ==: " + str(n))
+                            print("n shouldn't be higher than 6, n ==: " + str(n))
                 except IndexError:
                     line = string_to_label[:]
             string_to_label = string_to_label[MAX_CHAR+1-n:]
@@ -114,7 +107,6 @@ class MainWidget(Widget):
         for label in reversed(self.ids.scroll_layout.children):
             if label.text == label.hidden_text:
                 continue
-            # print(label.id)
             return label
         print("no labels have a hidden text")
 
@@ -127,22 +119,6 @@ class MainWidget(Widget):
         else:
             for label in self.ids.scroll_layout.children:
                 print("failed to delete label:" + label.id)
-
-    def create_buttons(self):
-        """Create wpm buttons"""
-        speed_list = [6, 8, 10, 12, 14, 16, 20, 22, 24, 26]
-        for speed in speed_list:
-            button = Factory.SpeedButton()
-            self.ids.button_grid.add_widget(button)
-            button.text = str(speed)
-
-    def update_buttons(self):
-        for button in self.ids.button_grid.children:
-            button.disabled = False
-        for button in self.ids.button_grid.children:
-            if button.text == str(self.test_sound.wpm):
-                button.disabled = True
-                break
 
     def create_morse_string(self, string):
         string = string.strip()
@@ -159,30 +135,7 @@ class MainWidget(Widget):
 
         return string
 
-    def type_morse(self, dt):
-        label = self.get_label()
-        if label:
-            self.morse_string = label.hidden_text
-            index = len(label.hidden_text) - len(label.text)
-            label.text += label.hidden_text[-index]
-            self.set_downtime(label.text[-1])
-            if label.text == label.hidden_text:
-                self.scroll(label)
-            if self.ids.morse_light.active == True:
-                if label.text[-1] == "." or label.text[-1] == "-":
-                    self.set_light_bar(self.get_downtime(label.text[-1])+self.test_sound._time_unit/6)
-
-            self.typewriter = Clock.create_trigger(
-                self.type_morse, self.downtime)
-            self.typewriter()
-
-        else:
-            print("finished type writing")
-            self.downtime = 0
-            self.loop_toggle()
-
     def repeat(self, dt):
-        self.typewriter.cancel()
 
         if self.test_sound().state == "stop":
             self.test_sound.restart()
@@ -260,23 +213,6 @@ class MainWidget(Widget):
         else:
             return 0
         return time
-
-    def change_tempo(self, wpm):
-        self.test_sound.stop()
-        self.test_sound.change_speed(wpm)
-
-        for label in self.ids.scroll_layout.children:
-            if "[color" in label.text:
-                label.text = label.hidden_text
-                self.morse_loop.cancel()
-                self.check_loop()
-                break
-            elif label.text != label.hidden_text and label.text != "":
-                for label in self.ids.scroll_layout.children:
-                    label.text = ""
-                self.test_sound.restart()
-                print(self.test_sound().state)
-                break
 
     def highlight(self):
         next_label = self.ids.scroll_layout.children[-1]
