@@ -1,7 +1,8 @@
 import struct
 import wave
 import os
-import scipy
+import scipy.io
+from scipy.io import wavfile
 
 from kivy.core.audio import SoundLoader
 import numpy as np
