@@ -1,1 +1,11 @@
 .demorsifier
+/bin
+/lib
+.DS_Store
+pyvenv.cfg
+
+.wav
+.vscode/
+/sounds/
+__pycache__/
+.idea/
