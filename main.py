@@ -1,5 +1,5 @@
 import morse_code_sound as ms
-from morse_code_sound import Sound
+from morse_code_sound import Sound, SoundTranslator
 from kivy.uix.widget import Widget
 from kivy.uix.popup import Popup
 from kivy.properties import BooleanProperty, NumericProperty, ObjectProperty
@@ -74,6 +74,8 @@ class MainWidget(Widget):
         ms.create_wav_file(self.morse_string)
         self.test_sound.set_morse_string(self.morse_string)
         self.test_sound.play()
+        translator = SoundTranslator("sounds\\morse_code.wav")
+        print(translator.transform_to_morse())
 
     def create_labels(self, string_to_label):
         string_list = []
