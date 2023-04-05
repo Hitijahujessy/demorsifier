@@ -5,29 +5,34 @@ import numpy as np
 import soundfile as sf
 from scipy.io import wavfile
 
-data_dir = "sounds/imports"
-old_wav = pjoin(data_dir, 'Wet willy.wav')
+data_dir = "sounds\\imports"
+old_wav = pjoin(data_dir, 'foreign.wav')
 new_wav = pjoin(data_dir, 'new.wav')
 
 # Transform the audio file into a readable wav file
 data, samplerate = sf.read(old_wav)
+
 sf.write(new_wav, data, samplerate, subtype='PCM_16')
 
 
 samplerate, data = wavfile.read(new_wav)
-print(f"number of channels = {data.shape[1]}")
+if len(data.shape) == 2:
+    print(f"number of channels = {data.shape[1]}")
+    data = data[:, 0]
+else:
+    print(f"number of channels = 1")
 length = data.shape[0] / samplerate
 print(f"length = {length}s")
 
 
-peak = max(data[:, 0])
-valley = min(data[:, 0])
+peak = max(data)
+valley = min(data)
 
 
 def get_period(data):
     start = None
     end = None
-    for index, value in enumerate(data[:, 0]):
+    for index, value in enumerate(data):
         if value == peak and start is None:
             start = index
 
@@ -35,7 +40,7 @@ def get_period(data):
             end = index
 
         if start and end:
-            val = data[:, 0][(end - start) + index]
+            val = data[(end - start) + index]
             if val == peak:
                 return (end - start)
             else:
@@ -56,7 +61,7 @@ def get_1st_and_2nd_lowest_value(iterable_list):
 def get_silent_length(data=data, start_tick=0):
     """Returns the last tick of the silence before it ends"""
     try:
-        if data[start_tick, 0] != 0:
+        if data[start_tick] != 0:
             # print("Not a valid starting position")
             # print("Make sure the starting pos has data")
             return start_tick
@@ -64,7 +69,7 @@ def get_silent_length(data=data, start_tick=0):
         # Got the last frame
         return start_tick
 
-    for tick, value in enumerate(data[start_tick:, 0]):
+    for tick, value in enumerate(data[start_tick:]):
         if value != 0:
             return tick - 1 + start_tick
     # If there is only trailing silent space left of the audio return the last tick
@@ -76,7 +81,7 @@ def get_silent_length(data=data, start_tick=0):
 def get_sine_length(data=data, start_tick=0):
     """Returns the last tick of the sine before it ends"""
     try:
-        if data[start_tick, 0] == 0:
+        if data[start_tick] == 0:
             # print("Not a valid starting position")
             # print("Make sure the starting pos has data")
             return start_tick
@@ -84,9 +89,9 @@ def get_sine_length(data=data, start_tick=0):
         # Got the last frame
         return start_tick
 
-    for tick, value in enumerate(data[start_tick:, 0]):
+    for tick, value in enumerate(data[start_tick:]):
         # If the current two values are 0 return the previous tick
-        if value == 0 and data[tick+1+start_tick, 0] == 0:
+        if value == 0 and data[tick+1+start_tick] == 0:
             return tick - 1 + start_tick
 
     # If there is no trailing silent space left of the audio return the last tick
@@ -108,7 +113,7 @@ def get_all_audio_parts(data=data):
     audio_start_tick = 0
     audio_end_tick = 0
     audio_ticks_list = []
-    while audio_end_tick != len(data[:, 0]):
+    while audio_end_tick != len(data):
         audio_start_tick, audio_end_tick = get_next_sound_start_and_end(
             data, audio_end_tick)
         if audio_start_tick != audio_end_tick:
@@ -169,8 +174,8 @@ dit, dah = get_1st_and_2nd_lowest_value(audio_time_list)
 ticks_to_morse(audio_time_list, silence_time_list, dit, dah)
 
 time = np.linspace(0., length, data.shape[0])
-plt.plot(time, data[:, 0], label="Left channel")
-plt.plot(time, data[:, 1], label="Right channel")
+plt.plot(time, data, label="Left channel")
+plt.plot(time, data, label="Right channel")
 # plt.plot(time_list)
 plt.legend()
 plt.xlabel("Time [s]")

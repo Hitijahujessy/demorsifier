@@ -176,7 +176,11 @@ class SoundTranslator():
             path = "sounds\\imports\\new.wav"
 
         self.samplerate, self.data = wavfile.read(path)
-        print(f"number of channels = {self.data.shape[1]}")
+        if len(self.data.shape) == 2:
+            print(f"number of channels = {self.data.shape[1]}")
+            self.data = self.data[:, 0]
+        else:
+            print(f"number of channels = 1")
         self.length = self.data.shape[0] / self.samplerate
         print(f"length = {round(self.length, 4)}s")
 
@@ -187,17 +191,17 @@ class SoundTranslator():
         self.silence_ticks_list = self.get_all_inbetween_parts()
         self.audio_time_list = self.ticks_to_time(self.audio_ticks_list)
         self.silence_time_list = self.ticks_to_time(self.silence_ticks_list)
-        self.dit, self.dah = self.get_1st_and_2nd_lowest_value(
+        self.dit, self.dah = self.get_dit_and_dah(
             self.audio_time_list)
         self.morse_text = self.time_to_morse()
 
         return self.morse_text
 
-    def get_1st_and_2nd_lowest_value(self, iterable_list):
+    def get_dit_and_dah(self, iterable_list):
         minv1 = min(iterable_list)
         #Check same list again but skip the first smallest value
-        minv2 = min([val for val in iterable_list if val != minv1])
-        print(f"minv1 == {minv1} | minv2 == {minv2}")
+        minv2 = min([val for val in iterable_list if val != minv1 and val > minv1*2])
+        print(f"dit == {minv1} | dah == {minv2}")
         return minv1, minv2
 
     def get_silent_length(self, data=None, start_tick=0):
@@ -205,7 +209,7 @@ class SoundTranslator():
         if data is None:
             data = self.data
         try:
-            if not self._check_zeroness(data[start_tick, 0]):
+            if not self._check_zeroness(data[start_tick]):
                 # print("Not a valid starting position")
                 # print("Make sure the starting pos has data")
                 return start_tick
@@ -213,7 +217,7 @@ class SoundTranslator():
             # Got the last frame
             return start_tick
 
-        for tick, value in enumerate(data[start_tick:, 0]):
+        for tick, value in enumerate(data[start_tick:]):
             if not self._check_zeroness(value):
                 return tick - 1 + start_tick
         # If there is only trailing silent space left of the audio return the last tick
@@ -226,7 +230,7 @@ class SoundTranslator():
         if data is None:
             data = self.data
         try:
-            if self._check_zeroness(data[start_tick, 0]):
+            if self._check_zeroness(data[start_tick]):
                 # print("Not a valid starting position")
                 # print("Make sure the starting pos has data")
                 return start_tick
@@ -234,9 +238,9 @@ class SoundTranslator():
             # Got the last frame
             return start_tick
 
-        for tick, value in enumerate(data[start_tick:, 0]):
+        for tick, value in enumerate(data[start_tick:]):
             # If the current two values are 0 return the previous tick
-            if self._check_zeroness(value) and self._check_zeroness(data[tick+1+start_tick, 0]):
+            if self._check_zeroness(value) and self._check_zeroness(data[tick+1+start_tick]):
                 return tick - 1 + start_tick
 
         # If there is no trailing silent space left of the audio return the last tick
@@ -263,7 +267,7 @@ class SoundTranslator():
         audio_end_tick = 0
         audio_ticks_list = []
         #While we havent gone through all ticks
-        while audio_end_tick != len(data[:, 0]):
+        while audio_end_tick != len(data):
             #Get the next audio part beginning at tick 0, skips audio part for next iteration
             audio_start_tick, audio_end_tick = self.get_next_sound_start_and_end(
                 data, audio_end_tick)
@@ -303,10 +307,13 @@ class SoundTranslator():
     def time_to_morse(self):
         """Takes the audio_time_list and silence_time_list and turns them into morse according to the current dit & dah values"""
         morse_text = ""
+        sdit, sdah = self.get_dit_and_dah(self.silence_time_list)
         for audio, silence in zip(self.audio_time_list, self.silence_time_list):
-            if silence == self.dit:
+            # if the silence is shorter than a dah do nothing
+            if silence < sdah:
                 morse_text += ""
-            elif silence == self.dah:
+            # if silence is equal or longer than a dah and shorter than a dah+dit (should be 4xdit)
+            elif silence >= sdah and silence <= sdah+sdit:
                 morse_text += " "
             else:
                 morse_text += " / "
