@@ -160,10 +160,13 @@ class SoundTranslator():
         self.audio_time_list, self.audio_ticks_list, self.silence_ticks_list, self.silence_time_list = None, None, None, None
         self.dit, self.dah = 0, 0
         self.morse_text = None
+        
+    def __del__(self):
+        self.remove_wav_file()
 
     def transform_to_right_wav(self):
-        data_dir = "sounds\\imports"
-        old_wav = self.path
+        data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "sounds\\imports"))
+        old_wav = os.path.abspath(os.path.join(os.path.dirname(__file__), self.path))
         new_wav = pjoin(data_dir, 'new.wav')
 
         # Transform the audio file into a readable wav file
@@ -183,7 +186,7 @@ class SoundTranslator():
             print(f"number of channels = 1")
         self.length = self.data.shape[0] / self.samplerate
         print(f"length = {round(self.length, 4)}s")
-        
+
         self.zero_buffer = max(self.data) / 1000
         print(f"Buffer is: {self.zero_buffer}")
 
@@ -201,9 +204,10 @@ class SoundTranslator():
         return self.morse_text
 
     def get_dit_and_dah(self, iterable_list):
-        minv1 = min(iterable_list)
-        #Check same list again but skip the first smallest value
-        minv2 = min([val for val in iterable_list if val != minv1 and val > minv1*2])
+        minv1 = min([val for val in iterable_list if val > 0.001])
+        # Check same list again but skip the first smallest value
+        minv2 = min([val for val in iterable_list if val !=
+                    minv1 and val > minv1*2.8])
         print(f"dit == {minv1} | dah == {minv2}")
         return minv1, minv2
 
@@ -256,8 +260,9 @@ class SoundTranslator():
         Returns the first and last tick of the audio part."""
         if data is None:
             data = self.data
-        #skip the silent part of the audio
-        audio_start = self.get_silent_length(data, start_tick=start_pos) + 1 #start where there is frequency by adding 1 to last tick of the silence
+        # skip the silent part of the audio
+        # start where there is frequency by adding 1 to last tick of the silence
+        audio_start = self.get_silent_length(data, start_tick=start_pos) + 1
         audio_end = self.get_sine_length(data, start_tick=audio_start)
 
         return audio_start, audio_end
@@ -269,12 +274,12 @@ class SoundTranslator():
         audio_start_tick = 0
         audio_end_tick = 0
         audio_ticks_list = []
-        #While we havent gone through all ticks
+        # While we havent gone through all ticks
         while audio_end_tick != len(data):
-            #Get the next audio part beginning at tick 0, skips audio part for next iteration
+            # Get the next audio part beginning at tick 0, skips audio part for next iteration
             audio_start_tick, audio_end_tick = self.get_next_sound_start_and_end(
                 data, audio_end_tick)
-            #Making sure to not add empty audio parts to list
+            # Making sure to not add empty audio parts to list
             if audio_start_tick != audio_end_tick:
                 audio_ticks_list.append([audio_start_tick, audio_end_tick])
         print("Finished finding audio parts.")
@@ -288,8 +293,9 @@ class SoundTranslator():
         silence_ticks_list = []
         begin = 0
         for start_tick, end_tick in audio_ticks_list:
-            silence_ticks_list.append([begin, start_tick - 1]) # new end tick should be before the old start tick
-            begin = end_tick + 1 # New start tick should go 1 after the old end tick
+            # new end tick should be before the old start tick
+            silence_ticks_list.append([begin, start_tick - 1])
+            begin = end_tick + 1  # New start tick should go 1 after the old end tick
         return silence_ticks_list
 
     def print_audio_and_silence_ticks(self):
@@ -334,3 +340,12 @@ class SoundTranslator():
             return True
         else:
             return False
+
+    def remove_wav_file(self):
+        path = os.path.abspath(os.path.join(os.path.dirname(__file__), "sounds\\imports\\new.wav"))
+        if os.path.exists(path):
+            os.remove(path)
+            
+        else:
+            print("failed to delete: ", path)
+            print("file not found")

@@ -30,7 +30,7 @@ def code_to_char(morse_code: str):
         try:
             char = REVERSE_MORSE_CODE_DICT[morse_code]
         except KeyError:
-            char = ""
+            char = "[not a real character]"
     return char
 
 
@@ -47,6 +47,6 @@ def translate(morse_string: str):
     print(text_list)
     return text_list
 
-string= " / . / . / - / . / - / - / - / . / - / . / . / . / . / - / - / . / - / . / - / . / - / . / . / - / - / - / . / \
-- / . / . / - / - / . / . / . / . / . / - / . / . / . / - / - / . / . / - / - / - / - / ."
-translate(string)  # TEST SOS TEST
+
+string = "... --- ..."
+translate("-- . .-. .. -.. .. .- -. / --- ..- - .--. --- ... -")

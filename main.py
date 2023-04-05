@@ -58,8 +58,9 @@ class MainWidget(Widget):
         super(MainWidget, self).__init__(**kwargs)
         self.morse_loop = Clock.create_trigger(self.repeat, self.downtime)
         self.test_sound = Sound(" ", wpm=12)
-        translator = SoundTranslator("sounds\\imports\\sos.wav")
+        translator = SoundTranslator("sounds\\imports\\meridian.wav")
         print(translator.transform_to_morse())
+        del translator
 
     def translate_to_morse(self):
         self.morse_string = self.create_morse_string(self.text_string)
