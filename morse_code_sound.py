@@ -183,6 +183,9 @@ class SoundTranslator():
             print(f"number of channels = 1")
         self.length = self.data.shape[0] / self.samplerate
         print(f"length = {round(self.length, 4)}s")
+        
+        self.zero_buffer = max(self.data) / 1000
+        print(f"Buffer is: {self.zero_buffer}")
 
     def transform_to_morse(self):
         if self.data is None:
@@ -327,8 +330,7 @@ class SoundTranslator():
 
     def _check_zeroness(self, value):
         """Evaluates the frequency value to the set buffer. Increase buffer with louder background noise"""
-        zero_buffer = 500
-        if value > -zero_buffer and value < zero_buffer:
+        if value > -self.zero_buffer and value < self.zero_buffer:
             return True
         else:
             return False
