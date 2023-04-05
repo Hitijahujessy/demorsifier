@@ -22,6 +22,8 @@
     hidden_text: ""
 
 <MainWidget>
+    upload_label: upload_label
+
     canvas.before:
         Color:
             rgba: (.22, .22, .22, 1)
@@ -56,7 +58,7 @@
             bold: True
             halign: "center"
             valign: "middle"
-            on_release: app.root.show_save()
+            on_release: app.root.show_load()
             pos_hint: {"center_x": .475, "center_y": .75}
             size_hint: .08, .09
             background_color: 0, 0, 0, 0
@@ -70,6 +72,13 @@
             #     source: "./images/icons/download.png"
             #     size: download_morse.size[0] *0.9, download_morse.size[1] *0.9
             #     pos: download_morse.x*1.025, download_morse.y*1.01
+            
+        # Upload Label
+        Label:
+            id: upload_label
+            text: "No file selected"
+            pos_hint: {"center_x": .475, "center_y": .81}
+            font_size: 24
 
         # Upper Label
         ScrollView:
@@ -137,6 +146,19 @@
                 source: "./images/icons/copy.png"
                 size: copy_morse_upper.size #copy_morse.size[0] *0.9, copy_morse.size[1] *0.9
                 pos: copy_morse_upper.pos #copy_morse.x*1.045, copy_morse.y*1
+
+        ToggleButton:
+            text: "-" if self.state == "normal" else "+"
+            bold: True
+            text_size: self.size
+            font_size: 37
+            halign: "center"
+            valign: "top"
+            on_release: print("click")#Clipboard.copy(app.root.clipboard)
+            pos_hint: {"x": .92, "center_y": .5325}
+            size_hint: .03, .04
+            background_color: 0, 0, 0, 1
+            foreground_color: (1, 1, 1, .5)
 
         Button:
             id: copy_morse_lower
@@ -278,10 +300,9 @@
         ToggleButton:
             id: morse_light
             pos_hint: {"center_x": .825, "center_y": .625}
-            text: "turn on flashlight"
             size_hint: .3, .1
             active: True
-            text: "Toggle flashlight" if self.state == "normal" else ""
+            #text: "    Toggle flashlight" if self.state == "normal" else ""
             background_color: (0, 0, 0, 0)
             canvas.before:
                 Color:
@@ -295,15 +316,14 @@
                     pos: self.pos
                     size: self.size
             Image:
-                source: "./images/icons/flashlight.png"
-                size_hint: .5, .5 #copy_morse.size[0] *0.9, copy_morse.size[1] *0.9
-                pos: morse_light.pos #copy_morse.x*1.045, copy_morse.y*1
+                source: "./images/icons/flashlight_off.png" if morse_light.state=="normal" else "./images/icons/flashlight.png"
+                pos: morse_light.pos[0]*1.175, morse_light.pos[1] *1.0125  #copy_morse.x*1.045, copy_morse.y*1
 
 
 
         Button:
             id: github
-            on_release: webbrowser.open("https://github.com/Hitijahujessy/morsifier")
+            on_release: webbrowser.open("https://github.com/Hitijahujessy/demorsifier")
             size_hint: 0.07,0.08
             pos_hint: {"x": .01, "top": .98}
             background_color: 0, 0, 0, 0
@@ -316,7 +336,7 @@
                     size: github.size
 
 
-<SaveDialog>:
+<LoadDialog>:
     text_input: text_input
     BoxLayout:
         size: root.size
@@ -340,5 +360,7 @@
                 on_release: root.cancel()
 
             Button:
-                text: "Save"
-                on_release: root.save(filechooser.path, text_input.text)
+                text: "Load"
+                on_release: 
+                    root.load(filechooser.path, filechooser.selection);
+                    app.root.upload_label.text = filechooser.selection[0]

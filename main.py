@@ -52,6 +52,7 @@ class MainWidget(Widget):
     downtime = NumericProperty(0)
     downtime_sum = NumericProperty(0)
     flashlight_color = ObjectProperty((0, 0, 0, 1))
+    upload_label = ObjectProperty()
 
     def __init__(self, **kwargs):
         super(MainWidget, self).__init__(**kwargs)
@@ -314,12 +315,19 @@ class MainWidget(Widget):
     def dismiss_popup(self):
         self._popup.dismiss()
 
+
     def show_save(self):
         if os.path.exists("./sounds/morse_code.wav"):
             content = SaveDialog(save=self.save, cancel=self.dismiss_popup)
             self._popup = Popup(title="Save file", content=content,
                             size_hint=(0.9, 0.9))
             self._popup.open()
+
+    def show_load(self):
+        content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
+        self._popup = Popup(title="Load file", content=content,
+                            size_hint=(0.9, 0.9))
+        self._popup.open()
         
 
     def save(self, path, filename):
@@ -329,9 +337,18 @@ class MainWidget(Widget):
 
         self.dismiss_popup()
 
+    def load(self, path, filename):
+
+        self.dismiss_popup()
+
 
 class SaveDialog(Widget):
     save = ObjectProperty()
+    text_input = ObjectProperty()
+    cancel = ObjectProperty()
+
+class LoadDialog(Widget):
+    load = ObjectProperty()
     text_input = ObjectProperty()
     cancel = ObjectProperty()
 
