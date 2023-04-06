@@ -7,6 +7,7 @@ from kivy.lang import Builder
 from kivy.factory import Factory
 from kivy.core.audio import SoundLoader
 from kivy.clock import Clock
+from kivy.animation import Animation
 from kivy.app import App
 import os
 import platform
@@ -53,6 +54,7 @@ class MainWidget(Widget):
     downtime_sum = NumericProperty(0)
     flashlight_color = ObjectProperty((0, 0, 0, 1))
     upload_label = ObjectProperty()
+    sound = None
 
     def __init__(self, **kwargs):
         super(MainWidget, self).__init__(**kwargs)
@@ -72,6 +74,7 @@ class MainWidget(Widget):
         self.test_sound.play()
         translator = SoundTranslator("sounds\\morse_code.wav")
         print(translator.transform_to_morse())
+        scrollview_no = 1
 
     def create_labels(self, string_to_label):
         string_list = []
@@ -342,6 +345,37 @@ class MainWidget(Widget):
     def load(self, path, filename):
 
         self.dismiss_popup()
+
+    def minimize_label(self):
+        if self.scrollview_no == 1:
+            anim = Animation(pos_hint={"x": .92, "center_y": .5325}, size_hint=(.95, .05), duration=.1)
+            anim.start(self.ids.scroll_view)
+        elif self.scrollview_no == 2:
+            anim = Animation(pos_hint={"x": .92, "center_y": .25}, size_hint=(.95, .05), duration=.1)
+            anim.start(self.ids.scroll_view2)
+
+    def maximize_label(self):
+        if self.scrollview_no == 1:
+            anim = Animation(pos_hint={"x": .92, "center_y": .4325}, size_hint=(.95, .25), duration=.1)
+            anim.start(self.ids.scroll_view)
+        elif self.scrollview_no == 2:
+            anim = Animation(pos_hint={"x": .92, "center_y": .15}, size_hint=(.95, .25), duration=.1)
+            anim.start(self.ids.scroll_view2)
+
+    def play_audio(self):
+        try:
+            self.sound = SoundLoader.load(self.ids.upload_label.text)
+        except Exception as e:
+            print(e)
+        try:
+            self.sound.play()
+        except Exception as e:
+            print(e)
+
+        if os.path.exist(self.ids.upload_label.text):
+            self.ids.audio_slider.max = self.sound.length
+            self.ids.audio_slider.value = self.sound.position
+
 
 
 class SaveDialog(Widget):

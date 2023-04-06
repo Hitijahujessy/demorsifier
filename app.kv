@@ -132,7 +132,7 @@
             disabled: False
             halign: "center"
             valign: "middle"
-            on_release: print("click")#Clipboard.copy(app.root.clipboard)
+            on_release: Clipboard.copy(app.root.clipboard)
             pos_hint: {"x": .94, "center_y": .5325}
             size_hint: .03, .04
             background_color: 0, 0, 0, 0
@@ -148,17 +148,28 @@
                 pos: copy_morse_upper.pos #copy_morse.x*1.045, copy_morse.y*1
 
         ToggleButton:
-            text: "-" if self.state == "normal" else "+"
+            id: minimize_upper
             bold: True
             text_size: self.size
             font_size: 37
             halign: "center"
             valign: "top"
-            on_release: print("click")#Clipboard.copy(app.root.clipboard)
-            pos_hint: {"x": .92, "center_y": .5325}
-            size_hint: .03, .04
-            background_color: 0, 0, 0, 1
-            foreground_color: (1, 1, 1, .5)
+            on_press: 
+                app.root.scrollview_no = 1; 
+                app.root.minimize_label() if self.state == "down" else app.root.maximize_label()
+            pos_hint: {"x": .90, "center_y": .5325}
+            size_hint: .032, .042
+            background_color: 0, 0, 0, 0
+            canvas.before:
+                Color:
+                    rgba: (0, 0, 0, 0) if self.state == "normal" else (0, 0, 0, .2)
+                RoundedRectangle:
+                    size: scroll_view.size
+                    pos: scroll_view.pos   
+            Image:
+                source: "images/icons/minimize.png" if minimize_upper.state == "normal" else "images/icons/maximize.png"
+                size: minimize_upper.size
+                pos: minimize_upper.pos
 
         Button:
             id: copy_morse_lower
@@ -167,7 +178,7 @@
             disabled: False
             halign: "center"
             valign: "middle"
-            on_release: print("click")#Clipboard.copy(app.root.clipboard)
+            on_release: Clipboard.copy(app.root.clipboard)
             pos_hint: {"x": .94, "center_y": .25}
             size_hint: .03, .04
             background_color: 0, 0, 0, 0
@@ -182,12 +193,35 @@
                 size: copy_morse_lower.size #copy_morse.size[0] *0.9, copy_morse.size[1] *0.9
                 pos: copy_morse_lower.pos #copy_morse.x*1.045, copy_morse.y*1
 
+        ToggleButton:
+            id: minimize_lower
+            bold: True
+            text_size: self.size
+            font_size: 37
+            halign: "center"
+            valign: "top"
+            on_press: 
+                app.root.scrollview_no = 2;
+                app.root.minimize_label() if self.state == "down" else app.root.maximize_label()
+            pos_hint: {"x": .9075, "center_y": .25}
+            size_hint: .032, .042
+            background_color: 0, 0, 0, 0
+            canvas.before:
+                Color:
+                    rgba: (0, 0, 0, 0) if self.state == "normal" else (0, 0, 0, .2)
+                RoundedRectangle:
+                    size: scroll_view2.size
+                    pos: scroll_view2.pos   
+            Image:
+                source: "images/icons/minimize.png" if minimize_lower.state == "normal" else "images/icons/maximize.png"
+                size: minimize_lower.size
+                pos: minimize_lower.pos
 
         GridLayout:
             id: sound_control_grid
-            cols: 5
-            pos_hint: {"center_x": .1875, "center_y": .61}
-            size_hint: .325, .075
+            cols: 3
+            pos_hint: {"center_x": .125, "center_y": .61}
+            size_hint: .2, .075
             spacing: 18
 
 
@@ -233,38 +267,13 @@
                     size: mute_sound.size[0] *0.9, mute_sound.size[1] *0.9
                     pos: (mute_sound.x*1.05, mute_sound.y*1.005) if mute_sound.state == "normal" else (mute_sound.x*1.05, mute_sound.y*1.005)
 
-            Button:
-                id: backward
-                text_size: self.size
-                font_size: self.width/4
-                text: "<<"
-                disabled: False
-                halign: "center"
-                valign: "middle"
-                on_release: pass
-                # pos_hint: {"center_x": .235, "center_y": .625}
-                # size_hint: .07, .08
-                background_color: 0, 0, 0, 0
-                canvas.before:
-                    Color:
-                        rgba: (0, .4, .66, 1) if self.state == "normal" else (0, .2, .46, 1)
-                    RoundedRectangle:
-                        size: self.size
-                        pos: self.pos   
-                # Image:
-                #     source: "./images/icons/unmute.png" if  mute_sound.state == "normal" else "./images/icons/mute.png"
-                #     size: mute_sound.size[0] *0.9, mute_sound.size[1] *0.9
-                #     pos: (mute_sound.x*1.25, mute_sound.y*1.005) if mute_sound.state == "normal" else (mute_sound.x*1.1125, mute_sound.y*1.005)
-
-
-            Button:
+            ToggleButton:
                 id: play_pause
                 text_size: self.size
                 font_size: self.width/5
-                text: "Play/Pause"
                 halign: "center"
                 valign: "middle"
-                on_release: app.root.show_save()
+                on_press: app.root.play_audio()
                 # pos_hint: {"center_x": .325, "center_y": .625}
                 # size_hint: .07, .08
                 background_color: 0, 0, 0, 0
@@ -274,28 +283,26 @@
                     RoundedRectangle:
                         size: self.size
                         pos: self.pos   
-                # Image:
-                #     source: "./images/icons/updownload.png"
-                #     size: download_morse.size[0] *0.9, download_morse.size[1] *0.9
-                #     pos: download_morse.x*1.025, download_morse.y*1.01
-
-            Button:
-                id: forward
-                text_size: self.size
-                font_size: self.width/5
-                text: ">>"
-                halign: "center"
-                valign: "middle"
-                on_release: app.root.show_save()
-                # pos_hint: {"center_x": .42, "center_y": .625}
-                # size_hint: .07, .08
-                background_color: 0, 0, 0, 0
-                canvas.before:
-                    Color:
-                        rgba: (0, .4, .66, 1) if self.state == "normal" else (0, .2, .46, 1)
-                    RoundedRectangle:
-                        size: self.size
-                        pos: self.pos  
+                Image:
+                    source: "./images/icons/play.png" if play_pause.state == "normal" else "./images/icons/pause.png"
+                    size: play_pause.size[0] *0.6, play_pause.size[1] *0.6
+                    pos: play_pause.x*1.06, play_pause.y*1.025
+        Slider:
+            id: audio_slider
+            disabled: True if upload_label.text == "No file selected" else False
+            min: 0
+            max: 1
+            #value: 0 if upload_label.text == "No file selected" else app.root.sound.position
+            size_hint: .5, .05
+            pos_hint: {"center_x": .5, "center_y": .6}
+            
+            canvas.before:
+                Color:
+                    rgb: 1, 0, 0
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+            
 
         ToggleButton:
             id: morse_light
@@ -363,4 +370,4 @@
                 text: "Load"
                 on_release: 
                     root.load(filechooser.path, filechooser.selection);
-                    app.root.upload_label.text = filechooser.selection[0]
+                    app.root.upload_label.text = text_input.text
