@@ -206,28 +206,40 @@ class SoundTranslator():
 
         return self.morse_text
 
-    def get_dit_and_dah(self, iterable_list):
-        """Returns 2 lists of all possible dit and dah timings respectively"""
-        dit_list, dah_list = [], []
+    def get_dit_and_dah(self, iterable_list: list):
+        """Returns the average dit and dah timings"""
+        dit, dah = 0, 0
         if len(iterable_list) < 2:
             dit, dah = self.__get_default_dit_and_dah()
-            # make sure array is a numpy array
-            array = np.array([dit, dah])
 
-            # get insert positions
-            idxs = np.searchsorted(array, iterable_list, side="left")
-            
-            # find indexes where previous index is closer
-            prev_idx_is_less = ((idxs == len(array))|(np.fabs(iterable_list - array[np.maximum(idxs-1, 0)]) < np.fabs(iterable_list - array[np.minimum(idxs, len(array)-1)])))
-            idxs[prev_idx_is_less] -= 1
-            
-            print(array[idxs])
         else:
-            low, high = min(iterable_list), max(iterable_list)
-        return dit_list, dah_list
-    
+            temp_list = iterable_list[:]
+            temp_list.sort()
+            dit = min(temp_list)
+            dah = dit*3
+            for val in temp_list:
+                if val > dit and val < dah-dit:
+                    dit = val
+                    dah = dit*3
+
+        return dit, dah
+
+    def get_closest_to(self, arguments, values):
+        # make sure array is a numpy array
+        array = np.array(arguments)
+
+        # get insert positions
+        idxs = np.searchsorted(array, values, side="left")
+
+        # find indexes where previous index is closer
+        prev_idx_is_less = ((idxs == len(array)) | (np.fabs(
+            values - array[np.maximum(idxs-1, 0)]) < np.fabs(values - array[np.minimum(idxs, len(array)-1)])))
+        idxs[prev_idx_is_less] -= 1
+
+        return array[idxs]
+
     def __get_default_dit_and_dah(self):
-        return 0.1 , 0.3
+        return 0.1, 0.3
 
     def get_silent_length(self, data=None, start_tick=0):
         """Returns the last tick of the silence before it ends"""
@@ -343,19 +355,25 @@ class SoundTranslator():
         """Takes the audio_time_list and silence_time_list and turns them into morse according to the current dit & dah values"""
         morse_text = ""
         sdit, sdah = self.get_dit_and_dah(self.silence_time_list)
-        for audio, silence in zip(self.audio_time_list, self.silence_time_list):
+        nrml_audio_time_list = []
+        for audio in self.audio_time_list:
+            nrml_audio_time_list.append(*list(self.get_closest_to([self.dit, self.dah], [audio])))
+        nrml_silence_time_list = []
+        for silence in self.silence_time_list:
+            nrml_silence_time_list.append(*list(self.get_closest_to([sdit, sdah, sdit*7], [silence])))
+        for audio, silence in zip(nrml_audio_time_list, nrml_silence_time_list):
             # if the silence is shorter than a dah do nothing
-            if silence in sdit:
+            if silence == sdit:
                 morse_text += ""
             # if silence is equal or longer than a dah and shorter than a dah+dit (should be 4xdit)
-            elif silence in sdah:
+            elif silence == sdah:
                 morse_text += " "
             else:
                 morse_text += " / "
 
-            if audio in self.dit:
+            if audio == self.dit:
                 morse_text += "."
-            elif audio in self.dah:
+            elif audio == self.dah:
                 morse_text += "-"
 
         return morse_text
