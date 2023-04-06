@@ -158,15 +158,18 @@ class SoundTranslator():
         self.name = path
         self.data, self.samplerate, self.length = None, None, None
         self.audio_time_list, self.audio_ticks_list, self.silence_ticks_list, self.silence_time_list = None, None, None, None
-        self.dit, self.dah = 0, 0
+        self.dit, self.dah = [], []
         self.morse_text = None
-        
+        self.zero_buffer = 0
+
     def __del__(self):
         self.remove_wav_file()
 
     def transform_to_right_wav(self):
-        data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "sounds\\imports"))
-        old_wav = os.path.abspath(os.path.join(os.path.dirname(__file__), self.path))
+        data_dir = os.path.abspath(os.path.join(
+            os.path.dirname(__file__), "sounds\\imports"))
+        old_wav = os.path.abspath(os.path.join(
+            os.path.dirname(__file__), self.path))
         new_wav = pjoin(data_dir, 'new.wav')
 
         # Transform the audio file into a readable wav file
@@ -183,11 +186,11 @@ class SoundTranslator():
             print(f"number of channels = {self.data.shape[1]}")
             self.data = self.data[:, 0]
         else:
-            print(f"number of channels = 1")
+            print("number of channels = 1")
         self.length = self.data.shape[0] / self.samplerate
         print(f"length = {round(self.length, 4)}s")
 
-        self.zero_buffer = max(self.data) / 1000
+        self.zero_buffer = max(self.data) / 10
         print(f"Buffer is: {self.zero_buffer}")
 
     def transform_to_morse(self):
@@ -204,59 +207,79 @@ class SoundTranslator():
         return self.morse_text
 
     def get_dit_and_dah(self, iterable_list):
-        minv1 = min([val for val in iterable_list if val > 0.001])
-        # Check same list again but skip the first smallest value
-        minv2 = min([val for val in iterable_list if val !=
-                    minv1 and val > minv1*2.8])
-        print(f"dit == {minv1} | dah == {minv2}")
-        return minv1, minv2
+        """Returns 2 lists of all possible dit and dah timings respectively"""
+        dit_list, dah_list = [], []
+        if len(iterable_list) < 2:
+            dit, dah = self.__get_default_dit_and_dah()
+            # make sure array is a numpy array
+            array = np.array([dit, dah])
+
+            # get insert positions
+            idxs = np.searchsorted(array, iterable_list, side="left")
+            
+            # find indexes where previous index is closer
+            prev_idx_is_less = ((idxs == len(array))|(np.fabs(iterable_list - array[np.maximum(idxs-1, 0)]) < np.fabs(iterable_list - array[np.minimum(idxs, len(array)-1)])))
+            idxs[prev_idx_is_less] -= 1
+            
+            print(array[idxs])
+        else:
+            low, high = min(iterable_list), max(iterable_list)
+        return dit_list, dah_list
+    
+    def __get_default_dit_and_dah(self):
+        return 0.1 , 0.3
 
     def get_silent_length(self, data=None, start_tick=0):
         """Returns the last tick of the silence before it ends"""
         if data is None:
             data = self.data
         try:
-            if not self._check_zeroness(data[start_tick]):
+            if not self._check_loud_enough(data[start_tick]):
                 # print("Not a valid starting position")
                 # print("Make sure the starting pos has data")
                 return start_tick
         except IndexError:
             # Got the last frame
             return start_tick
+        period = 50
+        for tick, value in enumerate(data[start_tick:], start_tick):
+            if not self._check_loud_enough(value):
+                avg_amplitude = np.median(abs(data[tick:tick+period]))
+                if not self._check_loud_enough(avg_amplitude):
+                    return tick - 1
 
-        for tick, value in enumerate(data[start_tick:]):
-            if not self._check_zeroness(value):
-                return tick - 1 + start_tick
         # If there is only trailing silent space left of the audio return the last tick
         print(
             f"end of audiofile, returning tick: {tick} at length: {tick / self.samplerate}")
-        return tick + start_tick
+        return tick
 
     def get_sine_length(self, data=None, start_tick=0):
         """Returns the last tick of the sine before it ends"""
         if data is None:
             data = self.data
         try:
-            if self._check_zeroness(data[start_tick]):
+            if self._check_loud_enough(data[start_tick]):
                 # print("Not a valid starting position")
                 # print("Make sure the starting pos has data")
                 return start_tick
         except IndexError:
             # Got the last frame
             return start_tick
-
-        for tick, value in enumerate(data[start_tick:]):
+        period = 50
+        for tick, value in enumerate(data[start_tick:], start_tick):
             # If the current two values are 0 return the previous tick
-            if self._check_zeroness(value) and self._check_zeroness(data[tick+1+start_tick]):
-                return tick - 1 + start_tick
+            if self._check_loud_enough(value):
+                avg_amplitude = np.median(abs(data[tick:tick+period]))
+                if self._check_loud_enough(avg_amplitude):
+                    return tick - 1
 
         # If there is no trailing silent space left of the audio return the last tick
         print(
-            f"end of audiofile, returning tick: {tick + 1 + start_tick} at length: {(tick + 1 + start_tick) / self.samplerate}")
-        return tick + 1 + start_tick
+            f"end of audiofile, returning tick: {tick} at length: {tick / self.samplerate}")
+        return tick
 
     def get_next_sound_start_and_end(self, data=None, start_pos=0):
-        """seeks the next non-silent audio part until it gets silent again.
+        """Seeks the next non-silent audio part until it gets silent again.
         Returns the first and last tick of the audio part."""
         if data is None:
             data = self.data
@@ -282,6 +305,7 @@ class SoundTranslator():
             # Making sure to not add empty audio parts to list
             if audio_start_tick != audio_end_tick:
                 audio_ticks_list.append([audio_start_tick, audio_end_tick])
+                length = (audio_end_tick - audio_start_tick) / self.samplerate
         print("Finished finding audio parts.")
         print(f"Found {len(audio_ticks_list)} audio parts")
         return audio_ticks_list
@@ -296,6 +320,8 @@ class SoundTranslator():
             # new end tick should be before the old start tick
             silence_ticks_list.append([begin, start_tick - 1])
             begin = end_tick + 1  # New start tick should go 1 after the old end tick
+        print("Finished finding silent parts.")
+        print(f"Found {len(silence_ticks_list)} silent parts")
         return silence_ticks_list
 
     def print_audio_and_silence_ticks(self):
@@ -310,7 +336,7 @@ class SoundTranslator():
     def ticks_to_time(self, tick_list: list):
         """Returns the time between two values(ticks) in a listed list rounded to 4 decimals"""
         time_list = [round((end-start) / self.samplerate, 4)
-                     for start, end in tick_list]
+                     for start, end in tick_list if round((end-start) / self.samplerate, 4)]
         return time_list
 
     def time_to_morse(self):
@@ -319,33 +345,32 @@ class SoundTranslator():
         sdit, sdah = self.get_dit_and_dah(self.silence_time_list)
         for audio, silence in zip(self.audio_time_list, self.silence_time_list):
             # if the silence is shorter than a dah do nothing
-            if silence < sdah:
+            if silence in sdit:
                 morse_text += ""
             # if silence is equal or longer than a dah and shorter than a dah+dit (should be 4xdit)
-            elif silence >= sdah and silence <= sdah+sdit:
+            elif silence in sdah:
                 morse_text += " "
             else:
                 morse_text += " / "
 
-            if audio == self.dit:
+            if audio in self.dit:
                 morse_text += "."
-            elif audio == self.dah:
+            elif audio in self.dah:
                 morse_text += "-"
 
         return morse_text
 
-    def _check_zeroness(self, value):
+    def _check_loud_enough(self, value):
         """Evaluates the frequency value to the set buffer. Increase buffer with louder background noise"""
-        if value > -self.zero_buffer and value < self.zero_buffer:
-            return True
-        else:
-            return False
+        # I think this is basically a noise gate?
+        return bool(-self.zero_buffer < value < self.zero_buffer)
 
     def remove_wav_file(self):
-        path = os.path.abspath(os.path.join(os.path.dirname(__file__), "sounds\\imports\\new.wav"))
+        path = os.path.abspath(os.path.join(
+            os.path.dirname(__file__), "sounds\\imports\\new.wav"))
         if os.path.exists(path):
             os.remove(path)
-            
+
         else:
             print("failed to delete: ", path)
             print("file not found")

@@ -6,7 +6,7 @@ import soundfile as sf
 from scipy.io import wavfile
 
 data_dir = "sounds\\imports"
-old_wav = pjoin(data_dir, 'foreign.wav')
+old_wav = pjoin(data_dir, 'sos6wpm.wav')
 new_wav = pjoin(data_dir, 'new.wav')
 
 # Transform the audio file into a readable wav file

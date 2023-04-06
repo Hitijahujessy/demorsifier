@@ -49,4 +49,5 @@ def translate(morse_string: str):
 
 
 string = "... --- ..."
-translate("-- . .-. .. -.. .. .- -. / --- ..- - .--. --- ... -")
+string = " / -... - ."
+translate(string)
