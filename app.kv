@@ -11,7 +11,7 @@
 <MorseLabel@Label>:
     markup: True
     color: 0, 0, 0, 1
-    font_size: self.width / 10
+    font_size: 22#self.width / 10
     text_size: self.width, None
     valign: "top"
     halign: "left"
@@ -137,7 +137,7 @@
             disabled: False
             halign: "center"
             valign: "middle"
-            on_release: Clipboard.copy(app.root.clipboard)
+            on_release: Clipboard.copy(Clipboard.copy(morselabel.text))
             pos_hint: {"x": .94, "center_y": .5325}
             size_hint: .03, .04
             background_color: 0, 0, 0, 0
