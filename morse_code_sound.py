@@ -167,7 +167,7 @@ class SoundTranslator():
 
     def transform_to_right_wav(self):
         data_dir = os.path.abspath(os.path.join(
-            os.path.dirname(__file__), "sounds\\imports"))
+            os.path.dirname(__file__), "sounds/imports"))
         old_wav = os.path.abspath(os.path.join(
             os.path.dirname(__file__), self.path))
         new_wav = pjoin(data_dir, 'new.wav')
@@ -179,7 +179,7 @@ class SoundTranslator():
     def load(self, path=None):
         if path is None:
             self.transform_to_right_wav()
-            path = "sounds\\imports\\new.wav"
+            path = "sounds/imports/new.wav"
 
         self.samplerate, self.data = wavfile.read(path)
         if len(self.data.shape) == 2:
@@ -213,7 +213,7 @@ class SoundTranslator():
             dit, dah = self.__get_default_dit_and_dah()
 
         else:
-            temp_list = iterable_list[:]
+            temp_list = [val for val in iterable_list if val > max(iterable_list) / 100]
             temp_list.sort()
             dit = min(temp_list)
             dah = dit*3
