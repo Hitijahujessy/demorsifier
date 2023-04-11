@@ -69,12 +69,19 @@ class MainWidget(Widget):
         self.sound = Sound("", 12)
         self.sound.unload()
         translate_path = self.ids.upload_label.text
+
         translator = SoundTranslator(translate_path)
         print(translator.transform_to_morse())
+        morse_code = translator.transform_to_morse()
+        
+        # self.create_labels(morse_code)
+        # self.get_label()
+        self.ids.morselabel.text = morse_code # Placeholder
         self.sound = Sound("", 12)
         self.sound.load(translate_path)
 
     def create_labels(self, string_to_label):
+        print("CHECK ", string_to_label)
         string_list = []
         MAX_CHAR = 25
         lines = 1 + len(string_to_label) // MAX_CHAR

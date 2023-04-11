@@ -154,9 +154,11 @@ class Sound():
     def toggle_loop(self):
         if self.track.loop:
             self.track.loop = False
+            self.track.stop()
         elif not self.track.loop:
             self.track.loop = True
-
+            self.track.stop()
+            self.track.play()
 
 class SoundTranslator():
     def __init__(self, path: str):
