@@ -150,6 +150,12 @@ class Sound():
 
     def unmute(self):
         self.track.volume = 1
+    
+    def toggle_loop(self):
+        if self.track.loop:
+            self.track.loop = False
+        elif not self.track.loop:
+            self.track.loop = True
 
 
 class SoundTranslator():
@@ -385,7 +391,7 @@ class SoundTranslator():
 
     def remove_wav_file(self):
         path = os.path.abspath(os.path.join(
-            os.path.dirname(__file__), "sounds\\imports\\new.wav"))
+            os.path.dirname(__file__), "sounds/imports/new.wav"))
         if os.path.exists(path):
             os.remove(path)
 

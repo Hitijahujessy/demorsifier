@@ -8,6 +8,7 @@ from kivy.lang import Builder
 from kivy.factory import Factory
 from kivy.core.audio import SoundLoader
 from kivy.clock import Clock
+from kivy.animation import Animation
 from kivy.app import App
 import os
 import platform
@@ -65,15 +66,13 @@ class MainWidget(Widget):
         mt.translate(morse_string)
 
     def translate_to_morse(self):
-        self.morse_string = self.create_morse_string(self.text_string)
-        self.create_labels(self.morse_string)
-        # Make sure that copy_morse copies the correct string
-        self.clipboard = self.morse_string
-        ms.create_wav_file(self.morse_string)
-        self.test_sound.set_morse_string(self.morse_string)
-        self.test_sound.play()
-        translator = SoundTranslator("sounds/morse_code.wav")
+        self.sound = Sound("", 12)
+        self.sound.unload()
+        translate_path = self.ids.upload_label.text
+        translator = SoundTranslator(translate_path)
         print(translator.transform_to_morse())
+        self.sound = Sound("", 12)
+        self.sound.load(translate_path)
 
     def create_labels(self, string_to_label):
         string_list = []
@@ -344,6 +343,23 @@ class MainWidget(Widget):
     def load(self, path, filename):
 
         self.dismiss_popup()
+
+    
+    def minimize_label(self):
+        if self.scrollview_no == 1:
+            anim = Animation(pos_hint={"x": .92, "center_y": .5325}, size_hint=(.95, .05), duration=.1)
+            anim.start(self.ids.scroll_view)
+        elif self.scrollview_no == 2:
+            anim = Animation(pos_hint={"x": .92, "center_y": .25}, size_hint=(.95, .05), duration=.1)
+            anim.start(self.ids.scroll_view2)
+
+    def maximize_label(self):
+        if self.scrollview_no == 1:
+            anim = Animation(pos_hint={"x": .92, "center_y": .4325}, size_hint=(.95, .25), duration=.1)
+            anim.start(self.ids.scroll_view)
+        elif self.scrollview_no == 2:
+            anim = Animation(pos_hint={"x": .92, "center_y": .15}, size_hint=(.95, .25), duration=.1)
+            anim.start(self.ids.scroll_view2)
 
 
 class SaveDialog(Widget):
