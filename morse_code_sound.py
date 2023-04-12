@@ -4,6 +4,7 @@ import wave
 from os.path import join as pjoin
 
 import matplotlib.pyplot as plt
+import morse_translator as mt
 import numpy as np
 import scipy.io
 import soundfile as sf
@@ -46,7 +47,7 @@ def create_sounds(time_unit):
 
 
 TIME_UNIT = 0.2
-create_sounds(TIME_UNIT)
+# create_sounds(TIME_UNIT)
 
 
 def create_wav_file(morse_string):
@@ -116,6 +117,13 @@ class Sound():
         self.morse_string = morse_string
         if wpm:
             self.change_speed(wpm)
+
+    def get_current_position(self):
+        if self.track.state == "stop":
+            return 0
+
+        percentage = self.track.get_pos() / self.track.length
+        return percentage
 
     def load(self, path="./sounds/morse_code.wav"):
         if os.path.exists(path):
@@ -190,7 +198,7 @@ class SoundTranslator():
         self.length = self.data.shape[0] / self.samplerate
         print(f"length = {round(self.length, 4)}s")
 
-        self.zero_buffer = max(self.data) / 10
+        self.zero_buffer = max(self.data) * 0.2
         print(f"Buffer is: {self.zero_buffer}")
 
     def transform_to_morse(self):
@@ -213,12 +221,12 @@ class SoundTranslator():
             dit, dah = self.__get_default_dit_and_dah()
 
         else:
-            temp_list = [val for val in iterable_list if val > max(iterable_list) / 100]
+            temp_list = iterable_list[:]
             temp_list.sort()
             dit = min(temp_list)
             dah = dit*3
             for val in temp_list:
-                if val > dit and val < dah-dit:
+                if val > dit and val < dah-dit*1.5:
                     dit = val
                     dah = dit*3
 
@@ -253,7 +261,8 @@ class SoundTranslator():
         except IndexError:
             # Got the last frame
             return start_tick
-        period = 50
+
+        period = 20
         for tick, value in enumerate(data[start_tick:], start_tick):
             if not self._check_loud_enough(value):
                 avg_amplitude = np.median(abs(data[tick:tick+period]))
@@ -277,9 +286,10 @@ class SoundTranslator():
         except IndexError:
             # Got the last frame
             return start_tick
-        period = 50
+
+        period = 20
         for tick, value in enumerate(data[start_tick:], start_tick):
-            # If the current two values are 0 return the previous tick
+            # If the current two values pass the noisegate return the previous tick
             if self._check_loud_enough(value):
                 avg_amplitude = np.median(abs(data[tick:tick+period]))
                 if self._check_loud_enough(avg_amplitude):
@@ -316,8 +326,10 @@ class SoundTranslator():
                 data, audio_end_tick)
             # Making sure to not add empty audio parts to list
             if audio_start_tick != audio_end_tick:
-                audio_ticks_list.append([audio_start_tick, audio_end_tick])
                 length = (audio_end_tick - audio_start_tick) / self.samplerate
+                if length > 0.01:
+                    audio_ticks_list.append([audio_start_tick, audio_end_tick])
+
         print("Finished finding audio parts.")
         print(f"Found {len(audio_ticks_list)} audio parts")
         return audio_ticks_list
@@ -332,7 +344,6 @@ class SoundTranslator():
             # new end tick should be before the old start tick
             silence_ticks_list.append([begin, start_tick - 1])
             begin = end_tick + 1  # New start tick should go 1 after the old end tick
-        print("Finished finding silent parts.")
         print(f"Found {len(silence_ticks_list)} silent parts")
         return silence_ticks_list
 
@@ -353,20 +364,24 @@ class SoundTranslator():
 
     def time_to_morse(self):
         """Takes the audio_time_list and silence_time_list and turns them into morse according to the current dit & dah values"""
-        morse_text = ""
-        sdit, sdah = self.get_dit_and_dah(self.silence_time_list)
+        
         nrml_audio_time_list = []
         for audio in self.audio_time_list:
-            nrml_audio_time_list.append(*list(self.get_closest_to([self.dit, self.dah], [audio])))
+            nrml_audio_time_list.append(
+                *list(self.get_closest_to([self.dit, self.dah], [audio])))
+            
         nrml_silence_time_list = []
         for silence in self.silence_time_list:
-            nrml_silence_time_list.append(*list(self.get_closest_to([sdit, sdah, sdit*7], [silence])))
+            nrml_silence_time_list.append(
+                *list(self.get_closest_to([self.dit, self.dah, self.dit*14], [silence])))
+        
+        morse_text = ""
         for audio, silence in zip(nrml_audio_time_list, nrml_silence_time_list):
             # if the silence is shorter than a dah do nothing
-            if silence == sdit:
+            if silence == self.dit:
                 morse_text += ""
             # if silence is equal or longer than a dah and shorter than a dah+dit (should be 4xdit)
-            elif silence == sdah:
+            elif silence == self.dah:
                 morse_text += " "
             else:
                 morse_text += " / "
@@ -392,3 +407,9 @@ class SoundTranslator():
         else:
             print("failed to delete: ", path)
             print("file not found")
+
+
+translator = SoundTranslator("sounds/imports/cj3a-60681.mp3")
+morse_string = translator.transform_to_morse()
+print(morse_string)
+mt.translate(morse_string)

@@ -1,19 +1,22 @@
-import morse_code_sound as ms
-from morse_code_sound import Sound, SoundTranslator
-import morse_translator as mt
-from kivy.uix.widget import Widget
-from kivy.uix.popup import Popup
-from kivy.properties import BooleanProperty, NumericProperty, ObjectProperty
-from kivy.lang import Builder
-from kivy.factory import Factory
-from kivy.core.audio import SoundLoader
-from kivy.clock import Clock
-from kivy.app import App
 import os
 import platform
 import shutil
 
 import kivy
+from kivy.app import App
+from kivy.clock import Clock
+from kivy.core.audio import SoundLoader
+from kivy.factory import Factory
+from kivy.lang import Builder
+from kivy.properties import BooleanProperty, NumericProperty, ObjectProperty
+from kivy.uix.popup import Popup
+from kivy.uix.widget import Widget
+from kivy.animation import Animation
+
+import morse_code_sound as ms
+import morse_translator as mt
+from morse_code_sound import Sound, SoundTranslator
+
 kivy.require("2.1.0")
 
 
@@ -59,7 +62,12 @@ class MainWidget(Widget):
         super(MainWidget, self).__init__(**kwargs)
         self.morse_loop = Clock.create_trigger(self.repeat, self.downtime)
         self.test_sound = Sound(" ", wpm=12)
-        translator = SoundTranslator("sounds/imports/w1aw-nov-09-80m-snip.wav")
+        
+        # v Testing stuff v
+        self.test_sound.load("sounds/imports/goedemiddag.wav")
+        
+        
+        translator = SoundTranslator("sounds/imports/cj3a-60681.mp3")
         morse_string = translator.transform_to_morse()
         print(morse_string)
         mt.translate(morse_string)
@@ -345,6 +353,40 @@ class MainWidget(Widget):
 
         self.dismiss_popup()
 
+    def minimize_label(self):
+        if self.scrollview_no == 1:
+            anim = Animation(pos_hint={"x": .92, "center_y": .5325}, size_hint=(.95, .05), duration=.1)
+            anim.start(self.ids.scroll_view)
+        elif self.scrollview_no == 2:
+            anim = Animation(pos_hint={"x": .92, "center_y": .25}, size_hint=(.95, .05), duration=.1)
+            anim.start(self.ids.scroll_view2)
+
+    def maximize_label(self):
+        if self.scrollview_no == 1:
+            anim = Animation(pos_hint={"x": .92, "center_y": .4325}, size_hint=(.95, .25), duration=.1)
+            anim.start(self.ids.scroll_view)
+        elif self.scrollview_no == 2:
+            anim = Animation(pos_hint={"x": .92, "center_y": .15}, size_hint=(.95, .25), duration=.1)
+            anim.start(self.ids.scroll_view2)
+
+    def play_audio(self):
+        try:
+            self.sound = ms.Sound("", 12)
+            self.sound.load(self.ids.upload_label.text)
+            
+        except Exception as e:
+            print(e)
+        try:
+            self.sound.play()
+            while self.sound().state == "play":
+                self.ids.audio_slider.value = self.sound.get_current_position()
+                if self.ids.audio_slider.value > 0.99:
+                    break
+        except Exception as e:
+            print(e)
+
+    def update_slider(self, dt):
+        Clock.schedule_once()
 
 class SaveDialog(Widget):
     save = ObjectProperty()
