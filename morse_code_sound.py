@@ -158,7 +158,7 @@ class Sound():
 
     def unmute(self):
         self.track.volume = 1
-    
+
     def toggle_loop(self):
         if self.track.loop:
             self.track.loop = False
@@ -167,6 +167,7 @@ class Sound():
             self.track.loop = True
             self.track.stop()
             self.track.play()
+
 
 class SoundTranslator():
     def __init__(self, path: str):
@@ -209,6 +210,9 @@ class SoundTranslator():
         self.zero_buffer = max(self.data) * 0.2
         print(f"Buffer is: {self.zero_buffer}")
 
+        self.period = 0.01 * self.samplerate
+    
+
     def transform_to_morse(self):
         if self.data is None:
             self.load()
@@ -229,14 +233,22 @@ class SoundTranslator():
             dit, dah = self.__get_default_dit_and_dah()
 
         else:
-            temp_list = iterable_list[:]
+            temp_list = list(set(iterable_list[:]))  # Remove duplicates
             temp_list.sort()
+            third = len(temp_list) // 3
+            mean1st, mean2nd, mean3rd = np.mean(temp_list[:third]), np.mean(
+                temp_list[third:third*2]), np.mean(temp_list[third*2:])
             dit = min(temp_list)
             dah = dit*3
             for val in temp_list:
                 if val > dit and val < dah-dit*1.5:
                     dit = val
                     dah = dit*3
+                if dah > temp_list[-1]:
+                    break
+                if self.get_closest_to([mean1st, mean2nd, mean3rd], [val]) != mean1st:
+                    break
+                    
 
         return dit, dah
 
@@ -255,26 +267,26 @@ class SoundTranslator():
         return array[idxs]
 
     def __get_default_dit_and_dah(self):
-        return 0.1, 0.3
+        return 0.3, 0.9
 
     def get_silent_length(self, data=None, start_tick=0):
         """Returns the last tick of the silence before it ends"""
         if data is None:
             data = self.data
         try:
-            if not self._check_loud_enough(data[start_tick]):
-                # print("Not a valid starting position")
-                # print("Make sure the starting pos has data")
+            # If the current tick is too loud(too high amplitude) return the given tick
+            if self.__check_loud_enough(data[start_tick]):
                 return start_tick
         except IndexError:
-            # Got the last frame
+            # Got the last tick of the audio file
             return start_tick
 
-        period = 20
         for tick, value in enumerate(data[start_tick:], start_tick):
-            if not self._check_loud_enough(value):
-                avg_amplitude = np.median(abs(data[tick:tick+period]))
-                if not self._check_loud_enough(avg_amplitude):
+            # If the current value and the data-period values pass the noise gate
+            # (AKA not silent for long enough) return the tick before it
+            if self.__check_loud_enough(value):
+                mean = np.mean(abs(data[tick:int(tick+self.period)]))
+                if self.__check_loud_enough(mean):
                     return tick - 1
 
         # If there is only trailing silent space left of the audio return the last tick
@@ -287,25 +299,23 @@ class SoundTranslator():
         if data is None:
             data = self.data
         try:
-            if self._check_loud_enough(data[start_tick]):
-                # print("Not a valid starting position")
-                # print("Make sure the starting pos has data")
+            # If the tick does not pass the noise_gate
+            if not self.__check_loud_enough(data[start_tick]):
                 return start_tick
         except IndexError:
-            # Got the last frame
+            # Got the last tick of the file
             return start_tick
 
-        period = 20
         for tick, value in enumerate(data[start_tick:], start_tick):
-            # If the current two values pass the noisegate return the previous tick
-            if self._check_loud_enough(value):
-                avg_amplitude = np.median(abs(data[tick:tick+period]))
-                if self._check_loud_enough(avg_amplitude):
+            # check when the data-period does not pass the noise gate
+            if not self.__check_loud_enough(value):
+                peak = max(data[tick:int(tick+self.period)])
+                if not self.__check_loud_enough(peak):
                     return tick - 1
 
         # If there is no trailing silent space left of the audio return the last tick
         print(
-            f"end of audiofile, returning tick: {tick} at length: {tick / self.samplerate}")
+            f"end of audio-file, returning tick: {tick} at length: {tick / self.samplerate}")
         return tick
 
     def get_next_sound_start_and_end(self, data=None, start_pos=0):
@@ -370,19 +380,23 @@ class SoundTranslator():
                      for start, end in tick_list if round((end-start) / self.samplerate, 4)]
         return time_list
 
+    def normalize_list(self, values: list, arguments: list):
+        normalized_list = []
+        for value in values:
+            normalized_list.append(
+                *list(self.get_closest_to(arguments, [value])))
+
+        return normalized_list
+
     def time_to_morse(self):
         """Takes the audio_time_list and silence_time_list and turns them into morse according to the current dit & dah values"""
-        
-        nrml_audio_time_list = []
-        for audio in self.audio_time_list:
-            nrml_audio_time_list.append(
-                *list(self.get_closest_to([self.dit, self.dah], [audio])))
-            
-        nrml_silence_time_list = []
-        for silence in self.silence_time_list:
-            nrml_silence_time_list.append(
-                *list(self.get_closest_to([self.dit, self.dah, self.dit*14], [silence])))
-        
+
+        nrml_audio_time_list = self.normalize_list(
+            self.audio_time_list, [self.dit, self.dah])
+
+        nrml_silence_time_list = self.normalize_list(
+            self.silence_time_list, [self.dit, self.dah, self.dit*7])
+
         morse_text = ""
         for audio, silence in zip(nrml_audio_time_list, nrml_silence_time_list):
             # if the silence is shorter than a dah do nothing
@@ -401,10 +415,10 @@ class SoundTranslator():
 
         return morse_text
 
-    def _check_loud_enough(self, value):
-        """Evaluates the frequency value to the set buffer. Increase buffer with louder background noise"""
+    def __check_loud_enough(self, value):
+        """Returns False if value does not pass the noise gate"""
         # I think this is basically a noise gate?
-        return bool(-self.zero_buffer < value < self.zero_buffer)
+        return not bool(-self.zero_buffer < value < self.zero_buffer)
 
     def remove_wav_file(self):
         path = os.path.abspath(os.path.join(
@@ -416,8 +430,8 @@ class SoundTranslator():
             print("failed to delete: ", path)
             print("file not found")
 
-
-translator = SoundTranslator("sounds/imports/cj3a-60681.mp3")
-morse_string = translator.transform_to_morse()
-print(morse_string)
-mt.translate(morse_string)
+if __name__ == '__main__':
+    translator = SoundTranslator("sounds/imports/john316morsecode-20260.mp3")
+    morse_string = translator.transform_to_morse()
+    print(morse_string)
+    mt.translate(morse_string)
