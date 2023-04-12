@@ -73,17 +73,22 @@ class MainWidget(Widget):
         mt.translate(morse_string)
 
     def translate_to_morse(self):
-        self.morse_string = self.create_morse_string(self.text_string)
-        self.create_labels(self.morse_string)
-        # Make sure that copy_morse copies the correct string
-        self.clipboard = self.morse_string
-        ms.create_wav_file(self.morse_string)
-        self.test_sound.set_morse_string(self.morse_string)
-        self.test_sound.play()
-        translator = SoundTranslator("sounds/morse_code.wav")
+        self.sound = Sound("", 12)
+        self.sound.unload()
+        translate_path = self.ids.upload_label.text
+
+        translator = SoundTranslator(translate_path)
         print(translator.transform_to_morse())
+        morse_code = translator.transform_to_morse()
+        
+        # self.create_labels(morse_code)
+        # self.get_label()
+        self.ids.morselabel.text = morse_code # Placeholder
+        self.sound = Sound("", 12)
+        self.sound.load(translate_path)
 
     def create_labels(self, string_to_label):
+        print("CHECK ", string_to_label)
         string_list = []
         MAX_CHAR = 25
         lines = 1 + len(string_to_label) // MAX_CHAR
@@ -353,6 +358,7 @@ class MainWidget(Widget):
 
         self.dismiss_popup()
 
+    
     def minimize_label(self):
         if self.scrollview_no == 1:
             anim = Animation(pos_hint={"x": .92, "center_y": .5325}, size_hint=(.95, .05), duration=.1)

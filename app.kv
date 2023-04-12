@@ -11,7 +11,7 @@
 <MorseLabel@Label>:
     markup: True
     color: 0, 0, 0, 1
-    font_size: self.width / 10
+    font_size: 22#self.width / 10
     text_size: self.width, None
     valign: "top"
     halign: "left"
@@ -102,6 +102,11 @@
                 height: self.minimum_height
                 size_hint_y: None
 
+                MorseLabel:
+                    id: morselabel
+                    text: ""
+
+
         
         # Lower Label
         ScrollView:
@@ -132,7 +137,7 @@
             disabled: False
             halign: "center"
             valign: "middle"
-            on_release: Clipboard.copy(app.root.clipboard)
+            on_release: Clipboard.copy(Clipboard.copy(morselabel.text))
             pos_hint: {"x": .94, "center_y": .5325}
             size_hint: .03, .04
             background_color: 0, 0, 0, 0
@@ -229,8 +234,7 @@
                 id: loop_toggle
                 #text: "Loop"
                 disabled: False
-                on_press: pass
-                    #app.root.loop_toggle();
+                on_press: app.root.sound.toggle_loop()
                 # pos_hint: {"center_x": .06, "center_y": .625}
                 # size_hint: .07, .08
                 background_color: 0, 0, 0, 0
@@ -252,7 +256,7 @@
                 disabled: False
                 halign: "center"
                 valign: "middle"
-                on_release: app.root.mute_sound();
+                on_release: app.root.sound.mute() if self.state == "down" else app.root.sound.unmute()
                 # pos_hint: {"center_x": .145, "center_y": .625}
                 # size_hint: .07, .08
                 background_color: 0, 0, 0, 0
@@ -273,7 +277,7 @@
                 font_size: self.width/5
                 halign: "center"
                 valign: "middle"
-                on_press: app.root.play_audio()
+                on_press: app.root.sound.play() if self.state != "normal" else app.root.sound.stop()
                 # pos_hint: {"center_x": .325, "center_y": .625}
                 # size_hint: .07, .08
                 background_color: 0, 0, 0, 0
@@ -296,7 +300,6 @@
             #value: 0 if upload_label.text == "No file selected" else app.root.sound.position
             size_hint: .5, .05
             pos_hint: {"center_x": .5, "center_y": .6}
-            
             canvas.before:
                 Color:
                     rgb: 1, 0, 0
@@ -352,6 +355,8 @@
         orientation: "vertical"
         FileChooserListView:
             id: filechooser
+            rootpath: "/Users"
+            filters: ["*.wav", "*.mp3"]
             on_selection: text_input.text = self.selection and self.selection[0] or ''
 
         TextInput:
@@ -371,4 +376,5 @@
                 text: "Load"
                 on_release: 
                     root.load(filechooser.path, filechooser.selection);
-                    app.root.upload_label.text = text_input.text
+                    app.root.upload_label.text = text_input.text;
+                    app.root.translate_to_morse()
