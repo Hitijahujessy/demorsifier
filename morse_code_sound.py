@@ -3,10 +3,8 @@ import struct
 import wave
 from os.path import join as pjoin
 
-import matplotlib.pyplot as plt
 import morse_translator as mt
 import numpy as np
-import scipy.io
 import soundfile as sf
 from kivy.core.audio import SoundLoader
 from pydub import AudioSegment
@@ -334,9 +332,11 @@ class SoundTranslator():
         """Returns a list of all parts in the file that has audio"""
         if data is None:
             data = self.data
+            
         audio_start_tick = 0
         audio_end_tick = 0
         audio_ticks_list = []
+        
         # While we havent gone through all ticks
         while audio_end_tick != len(data):
             # Get the next audio part beginning at tick 0, skips audio part for next iteration
