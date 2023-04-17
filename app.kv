@@ -23,7 +23,6 @@
 
 <MainWidget>
     upload_label: upload_label
-
     canvas.before:
         Color:
             rgba: (.22, .22, .22, 1)
@@ -293,25 +292,31 @@
                     pos: play_pause.x*1.06, play_pause.y*1.025
         Slider:
             id: audio_slider
-            disabled: True if upload_label.text == "No file selected" else False
+            # disabled: True if upload_label.text == "No file selected" else False
             min: 0
             max: 1
             value_track: True
-            #value: 0 if upload_label.text == "No file selected" else app.root.sound.position
+            value: 0 #if upload_label.text == "No file selected" else app.root.sound.position
+            cursor_size: 25, 25
             size_hint: .5, .05
             pos_hint: {"center_x": .5, "center_y": .6}
             canvas.before:
                 Color:
-                    rgb: 1, 0, 0
-                Rectangle:
+                    rgba: 1, 1, 1, 0.25
+                RoundedRectangle:
                     size: self.size
                     pos: self.pos
+        Label:
+            id: track_position
+            text: "00:00 | 00:00"
+            pos_hint: {"center_x": .29, "center_y": .64}
+            font_size: 24
             
 
         ToggleButton:
             id: morse_light
-            pos_hint: {"center_x": .825, "center_y": .625}
-            size_hint: .3, .1
+            pos_hint: {"center_x": .875, "center_y": .625}
+            size_hint: .2, .1
             active: True
             #text: "    Toggle flashlight" if self.state == "normal" else ""
             background_color: (0, 0, 0, 0)
@@ -328,7 +333,7 @@
                     size: self.size
             Image:
                 source: "./images/icons/flashlight_off.png" if morse_light.state=="normal" else "./images/icons/flashlight.png"
-                pos: morse_light.pos[0]*1.175, morse_light.pos[1] *1.0125  #copy_morse.x*1.045, copy_morse.y*1
+                pos: morse_light.pos[0]*1.095, morse_light.pos[1] *1.0125  #copy_morse.x*1.045, copy_morse.y*1
 
 
 
