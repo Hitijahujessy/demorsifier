@@ -74,7 +74,7 @@ class MainWidget(Widget):
     def __init__(self, **kwargs):
         super(MainWidget, self).__init__(**kwargs)
         self.morse_loop = Clock.create_trigger(self.repeat, self.downtime)
-        self.test_sound = Sound(" ", wpm=12)
+        self.test_sound = Sound()
         
         # v Testing stuff v
         self.test_sound.load("sounds/imports/goedemiddag.wav")
@@ -86,7 +86,7 @@ class MainWidget(Widget):
         mt.translate(morse_string)
 
     def translate_to_morse(self):
-        self.sound = Sound("", 12)
+        self.sound = Sound()
         self.sound.unload()
         translate_path = self.ids.upload_label.text
 
@@ -97,16 +97,16 @@ class MainWidget(Widget):
         # self.create_labels(morse_code)
         # self.get_label()
         self.ids.morselabel.text = morse_code # Placeholder
-        self.sound = Sound("", 12)
+        self.sound = Sound()
         self.sound.load(translate_path)
         self.ids.audio_slider.max = self.sound.track.length
 
         timestamp_max = datetime.datetime.fromtimestamp(self.sound.track.length)
         timestamp_max = timestamp_max.strftime('%M:%S')
-        timestamp_current = datetime.datetime.fromtimestamp(self.sound.track.position)
-        timestamp_current = timestamp_max.strftime('%M:%S')
+        timestamp_current = datetime.datetime.fromtimestamp(self.sound.track.get_pos())
+        timestamp_current = timestamp_current.strftime('%M:%S')
 
-        self.ids.track_position.text = timestamp_current, " | ", timestamp_max
+        self.ids.track_position.text = f"{timestamp_current} | {timestamp_max}"
 
 
     def create_labels(self, string_to_label):
@@ -399,7 +399,7 @@ class MainWidget(Widget):
 
     def play_audio(self):
         try:
-            self.sound = ms.Sound("", 12)
+            self.sound = ms.Sound()
             self.sound.load(self.ids.upload_label.text)
             
         except Exception as e:

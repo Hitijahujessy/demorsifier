@@ -46,8 +46,3 @@ def translate(morse_string: str):
     text_list = code_list_to_string(morse_list)
     print(text_list)
     return text_list
-
-
-string = "... --- ..."
-string = " ..-. --- .-. . .. --. -. / - . -..- - / - .-. .- -. ... .-.. .- - .. --- -."
-translate(string)

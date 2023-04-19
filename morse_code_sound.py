@@ -89,7 +89,19 @@ def create_wav_file(morse_string):
 
 
 class Sound():
-    def __init__(self, morse_string: str, wpm) -> None:
+    
+    morse_string = None
+    wpm = None
+    _time_unit = None
+    track = None
+    path = None
+    def __init__(self):
+        pass
+
+    def __call__(self):
+        return self.track
+    
+    def create_audio(self, morse_string: str, wpm) -> None:
         self.morse_string = morse_string
         self.wpm = wpm
         self._time_unit = self.wpm_to_time_unit(self.wpm)
@@ -99,20 +111,17 @@ class Sound():
         create_wav_file(self.morse_string)
         self.load()
 
-    def __call__(self):
-        return self.track
-
     def wpm_to_time_unit(self, wpm: float):
         time_unit = 60/(50*wpm)
         return time_unit
 
-    def change_speed(self, wpm):
+    def change_speed(self, wpm, playback_only = False):
         self.unload()
-        self.wpm = wpm
-        self._time_unit = self.wpm_to_time_unit(wpm)
-        create_sounds(self._time_unit)
-        create_wav_file(self.morse_string)
-        self.load()
+        if not playback_only:
+            self._time_unit = self.wpm_to_time_unit(wpm)
+            create_sounds(self._time_unit)
+            create_wav_file(self.morse_string)
+            self.load()
 
     def set_morse_string(self, morse_string, wpm=None):
         self.morse_string = morse_string
@@ -120,13 +129,26 @@ class Sound():
             self.change_speed(wpm)
 
     def get_current_position(self):
+        """Returns the current position in percentage form"""
         if self.track.state == "stop":
             return 0
 
         percentage = self.track.get_pos() / self.track.length
         return percentage
 
+    def set_position(self, position: float):
+        """Sets the position of the track to a float.
+
+        Audio needs to play in order to seek so if its stopped it plays->seeks->stops immediately."""
+        if self.track.state != "play":
+            self.play()
+            self.track.seek(position)
+            self.stop()
+        else:
+            self.track.seek(position)
+
     def load(self, path="./sounds/morse_code.wav"):
+        self.path = path
         if os.path.exists(path):
             self.track = SoundLoader.load(path)
         else:
@@ -490,17 +512,3 @@ class SoundTranslator():
         else:
             print("failed to delete: ", path)
             print("file not found")
-
-
-if __name__ == '__main__':
-    translator = SoundTranslator("sounds/imports/foreign.wav")
-    morse_string = translator.transform_to_morse()
-    print(morse_string)
-    mt.translate(morse_string)
-    del translator
-
-    """# paris = Sound(".--. .- .-. .. ... / ", 12)
-    paris_translator = SoundTranslator("sounds/morse_code.wav")
-    paris_string = paris_translator.transform_to_morse()
-    print(paris_string)
-    mt.translate(paris_string)"""
