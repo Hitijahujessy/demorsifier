@@ -1,12 +1,13 @@
 import os
 import struct
 import wave
+import threading
+from collections import Counter
+import time
 from os.path import join as pjoin
 
-import matplotlib.pyplot as plt
 import morse_translator as mt
 import numpy as np
-import scipy.io
 import soundfile as sf
 from kivy.core.audio import SoundLoader
 from pydub import AudioSegment
@@ -174,7 +175,7 @@ class SoundTranslator():
         self.path = path
         self.name = path
         self.data, self.samplerate, self.length = None, None, None
-        self.audio_time_list, self.audio_ticks_list, self.silence_ticks_list, self.silence_time_list = None, None, None, None
+        self.audio_time_list, self.audio_ticks_list, self.silence_ticks_list, self.silence_time_list = None, [], None, None
         self.dit, self.dah = [], []
         self.morse_text = None
         self.zero_buffer = 0
@@ -210,18 +211,46 @@ class SoundTranslator():
         self.zero_buffer = max(self.data) * 0.2
         print(f"Buffer is: {self.zero_buffer}")
 
-        self.period = 0.01 * self.samplerate
-    
+        self.period = int(0.01 * self.samplerate)
+
+    def thread(self):
+        # split into parts
+        thread_amount = 1
+        parts = range(0, thread_amount)
+        part_length = len(self.data) / thread_amount
+        split_data = []
+        self.temp_audio_ticks_list = [0] * thread_amount
+        for part in parts:
+            split_data.append(
+                self.data[int(part*part_length):int((part+1)*part_length)])
+
+        thread_list = []
+        for i, data in enumerate(split_data):
+            thread = threading.Thread(
+                target=self.get_all_audio_parts, args=(data, i, i*part_length))
+            thread.start()
+            thread_list.append(thread)
+
+        for thread in thread_list:
+            thread.join()
+
+        self.audio_ticks_list = [
+            item for sublist in self.temp_audio_ticks_list for item in sublist]
 
     def transform_to_morse(self):
         if self.data is None:
             self.load()
-        self.audio_ticks_list = self.get_all_audio_parts()
+        start = time.time()
+        self.thread()
+        end = time.time()
+        print(f"{end - start} thread seconds")
         self.silence_ticks_list = self.get_all_inbetween_parts()
         self.audio_time_list = self.ticks_to_time(self.audio_ticks_list)
         self.silence_time_list = self.ticks_to_time(self.silence_ticks_list)
         self.dit, self.dah = self.get_dit_and_dah(
             self.audio_time_list)
+        self.set_wpm(self.dit)
+
         self.morse_text = self.time_to_morse()
 
         return self.morse_text
@@ -233,22 +262,36 @@ class SoundTranslator():
             dit, dah = self.__get_default_dit_and_dah()
 
         else:
-            temp_list = list(set(iterable_list[:]))  # Remove duplicates
+            temp_list = list(iterable_list[:])  # Remove duplicates
             temp_list.sort()
+
             third = len(temp_list) // 3
             mean1st, mean2nd, mean3rd = np.mean(temp_list[:third]), np.mean(
                 temp_list[third:third*2]), np.mean(temp_list[third*2:])
-            dit = min(temp_list)
+
+            c = Counter(temp_list)
+            most_common = max(c.most_common(), key=lambda x: x[1])
+            second_most_common = max(
+                (val for val in c.most_common() if val != most_common), key=lambda x: x[1])
+
+            if most_common[0] < second_most_common[0]:
+                dit = most_common[0]
+            else:
+                dit = second_most_common[0]
             dah = dit*3
+
             for val in temp_list:
-                if val > dit and val < dah-dit*1.5:
+                if dit < val < dah-dit*1.5:
                     dit = val
                     dah = dit*3
                 if dah > temp_list[-1]:
                     break
                 if self.get_closest_to([mean1st, mean2nd, mean3rd], [val]) != mean1st:
                     break
-                    
+
+            if self.dit and self.dah:
+                if self.get_closest_to([self.dit, self.dit*3, self.dit*7], [dah]) != self.dit*3:
+                    print(f"{dah} dah-time")
 
         return dit, dah
 
@@ -267,7 +310,7 @@ class SoundTranslator():
         return array[idxs]
 
     def __get_default_dit_and_dah(self):
-        return 0.3, 0.9
+        return 0.1, 0.3
 
     def get_silent_length(self, data=None, start_tick=0):
         """Returns the last tick of the silence before it ends"""
@@ -281,21 +324,21 @@ class SoundTranslator():
             # Got the last tick of the audio file
             return start_tick
 
-        for tick, value in enumerate(data[start_tick:], start_tick):
-            # If the current value and the data-period values pass the noise gate
-            # (AKA not silent for long enough) return the tick before it
-            if self.__check_loud_enough(value):
-                mean = np.mean(abs(data[tick:int(tick+self.period)]))
-                if self.__check_loud_enough(mean):
-                    return tick - 1
+        start = time.time()
+        for count, value in enumerate(data[start_tick::self.period]):
+            numerator = int(start_tick + (count * self.period))
+            mean = np.mean(abs(data[numerator:numerator+self.period]))
+            if self.__check_loud_enough(mean):
+                # print(time.time() - start)
+                return numerator - 1
 
         # If there is only trailing silent space left of the audio return the last tick
         print(
-            f"end of audiofile, returning tick: {tick} at length: {tick / self.samplerate}")
-        return tick
+            f"end of file, returning tick: {len(data)} at: {len(data) / self.samplerate}")
+        return len(data)
 
-    def get_sine_length(self, data=None, start_tick=0):
-        """Returns the last tick of the sine before it ends"""
+    def get_loud_length(self, data=None, start_tick=0):
+        """Returns the last tick of the sinewave before it ends"""
         if data is None:
             data = self.data
         try:
@@ -306,17 +349,18 @@ class SoundTranslator():
             # Got the last tick of the file
             return start_tick
 
-        for tick, value in enumerate(data[start_tick:], start_tick):
-            # check when the data-period does not pass the noise gate
-            if not self.__check_loud_enough(value):
-                peak = max(data[tick:int(tick+self.period)])
-                if not self.__check_loud_enough(peak):
-                    return tick - 1
+        start = time.time()
+        for count, value in enumerate(data[start_tick::self.period]):
+            numerator = int(start_tick + (count * self.period))
+            peak = max(data[numerator:numerator+self.period])
+            if not self.__check_loud_enough(peak):
+                # print(time.time() - start)
+                return numerator - 1
 
         # If there is no trailing silent space left of the audio return the last tick
         print(
-            f"end of audio-file, returning tick: {tick} at length: {tick / self.samplerate}")
-        return tick
+            f"end of audio-file, returning tick: {len(data)} at length: {len(data) / self.samplerate}")
+        return len(data)
 
     def get_next_sound_start_and_end(self, data=None, start_pos=0):
         """Seeks the next non-silent audio part until it gets silent again.
@@ -326,31 +370,40 @@ class SoundTranslator():
         # skip the silent part of the audio
         # start where there is frequency by adding 1 to last tick of the silence
         audio_start = self.get_silent_length(data, start_tick=start_pos) + 1
-        audio_end = self.get_sine_length(data, start_tick=audio_start)
+        audio_end = self.get_loud_length(data, start_tick=audio_start+1)
 
         return audio_start, audio_end
 
-    def get_all_audio_parts(self, data=None):
+    def get_all_audio_parts(self, data=None, tick_index=0, starting_index=0):
         """Returns a list of all parts in the file that has audio"""
         if data is None:
             data = self.data
+
         audio_start_tick = 0
         audio_end_tick = 0
         audio_ticks_list = []
+
+        print("Starting audio processing...")
         # While we havent gone through all ticks
-        while audio_end_tick != len(data):
+        while audio_end_tick <= len(data):
             # Get the next audio part beginning at tick 0, skips audio part for next iteration
+            start = time.time()
             audio_start_tick, audio_end_tick = self.get_next_sound_start_and_end(
                 data, audio_end_tick)
+            # print(time.time() - start)
             # Making sure to not add empty audio parts to list
             if audio_start_tick != audio_end_tick:
                 length = (audio_end_tick - audio_start_tick) / self.samplerate
                 if length > 0.01:
-                    audio_ticks_list.append([audio_start_tick, audio_end_tick])
+                    audio_ticks_list.append(
+                        [audio_start_tick+starting_index, audio_end_tick+starting_index])
 
-        print("Finished finding audio parts.")
-        print(f"Found {len(audio_ticks_list)} audio parts")
-        return audio_ticks_list
+            percentage = audio_end_tick / len(data)
+            # print(f"{round(percentage*100, 2)}% in thread {tick_index}")
+
+        print(
+            f"Found {len(audio_ticks_list)} audio parts in thread {tick_index}")
+        self.temp_audio_ticks_list[tick_index] = audio_ticks_list
 
     def get_all_inbetween_parts(self, audio_ticks_list=None):
         """Returns a list of a list of all parts in a list that arent in the list"""
@@ -362,7 +415,6 @@ class SoundTranslator():
             # new end tick should be before the old start tick
             silence_ticks_list.append([begin, start_tick - 1])
             begin = end_tick + 1  # New start tick should go 1 after the old end tick
-        print(f"Found {len(silence_ticks_list)} silent parts")
         return silence_ticks_list
 
     def print_audio_and_silence_ticks(self):
@@ -388,22 +440,27 @@ class SoundTranslator():
 
         return normalized_list
 
-    def time_to_morse(self):
+    def time_to_morse(self, farnsworth=None):
         """Takes the audio_time_list and silence_time_list and turns them into morse according to the current dit & dah values"""
 
+        if farnsworth:
+            silent_dit = farnsworth
+        else:
+            silent_dit = self.dit
+
+        # Transform the timing values to either dits or dahs (or word spacings for silent periods)
         nrml_audio_time_list = self.normalize_list(
             self.audio_time_list, [self.dit, self.dah])
-
         nrml_silence_time_list = self.normalize_list(
-            self.silence_time_list, [self.dit, self.dah, self.dit*7])
+            self.silence_time_list, [silent_dit, silent_dit*3, silent_dit*6])
 
         morse_text = ""
         for audio, silence in zip(nrml_audio_time_list, nrml_silence_time_list):
             # if the silence is shorter than a dah do nothing
-            if silence == self.dit:
+            if silence == silent_dit:
                 morse_text += ""
             # if silence is equal or longer than a dah and shorter than a dah+dit (should be 4xdit)
-            elif silence == self.dah:
+            elif silence == silent_dit*3:
                 morse_text += " "
             else:
                 morse_text += " / "
@@ -414,6 +471,10 @@ class SoundTranslator():
                 morse_text += "-"
 
         return morse_text
+
+    def set_wpm(self, dit):
+        self.wpm = 1.2/dit
+        print(f"Words per minute = {self.wpm}")
 
     def __check_loud_enough(self, value):
         """Returns False if value does not pass the noise gate"""
@@ -430,8 +491,16 @@ class SoundTranslator():
             print("failed to delete: ", path)
             print("file not found")
 
+
 if __name__ == '__main__':
-    translator = SoundTranslator("sounds/imports/john316morsecode-20260.mp3")
+    translator = SoundTranslator("sounds/imports/foreign.wav")
     morse_string = translator.transform_to_morse()
     print(morse_string)
     mt.translate(morse_string)
+    del translator
+
+    """# paris = Sound(".--. .- .-. .. ... / ", 12)
+    paris_translator = SoundTranslator("sounds/morse_code.wav")
+    paris_string = paris_translator.transform_to_morse()
+    print(paris_string)
+    mt.translate(paris_string)"""
