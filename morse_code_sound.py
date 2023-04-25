@@ -12,6 +12,7 @@ import soundfile as sf
 from kivy.core.audio import SoundLoader
 from pydub import AudioSegment
 from scipy.io import wavfile
+import datetime
 
 RATE = 44100
 
@@ -134,7 +135,9 @@ class Sound():
             return 0
 
         percentage = self.track.get_pos() / self.track.length
-        return percentage
+        timestamp_current = datetime.datetime.fromtimestamp(self.track.get_pos())
+        timestamp_current = timestamp_current.strftime('%M:%S')
+        return timestamp_current
 
     def set_position(self, position: float):
         """Sets the position of the track to a float.

@@ -77,10 +77,10 @@ class MainWidget(Widget):
         self.test_sound = Sound()
         
         # v Testing stuff v
-        self.test_sound.load("sounds/imports/goedemiddag.wav")
+        self.test_sound.load("sounds/imports/w1aw-nov-09-80m-snip.wav")
+        self.update_soundpos = Clock.create_trigger(self.update_timestamp, .1)
         
-        
-        translator = SoundTranslator("sounds/imports/cj3a-60681.mp3")
+        translator = SoundTranslator("sounds/imports/w1aw-nov-09-80m-snip.wav")
         morse_string = translator.transform_to_morse()
         print(morse_string)
         mt.translate(morse_string)
@@ -96,17 +96,27 @@ class MainWidget(Widget):
         
         # self.create_labels(morse_code)
         # self.get_label()
-        self.ids.morselabel.text = morse_code # Placeholder
+        self.ids.morselabel_upper.text = morse_code # Placeholder
         self.sound = Sound()
         self.sound.load(translate_path)
         self.ids.audio_slider.max = self.sound.track.length
 
         timestamp_max = datetime.datetime.fromtimestamp(self.sound.track.length)
         timestamp_max = timestamp_max.strftime('%M:%S')
-        timestamp_current = datetime.datetime.fromtimestamp(self.sound.track.get_pos())
-        timestamp_current = timestamp_current.strftime('%M:%S')
 
-        self.ids.track_position.text = f"{timestamp_current} | {timestamp_max}"
+        self.ids.track_position.text = f"00:00 | {timestamp_max}"
+
+    def update_timestamp(self, dt):
+        timestamp_max = datetime.datetime.fromtimestamp(self.sound.track.length)
+        timestamp_max = timestamp_max.strftime('%M:%S')
+        # timestamp_current = datetime.datetime.fromtimestamp(self.sound.get_current_position())
+        # timestamp_current = timestamp_current.strftime('%M:%S')
+
+        self.ids.track_position.text = f"{self.sound.get_current_position()} | {timestamp_max}"
+        # print(f"{timestamp_current} | {timestamp_max}")
+        # print(f"timestamp_current: {timestamp_current} | soundpos: {self.sound.get_current_position()}")
+
+        self.update_soundpos()
 
 
     def create_labels(self, string_to_label):
@@ -384,17 +394,27 @@ class MainWidget(Widget):
     def minimize_label(self):
         if self.scrollview_no == 1:
             anim = Animation(pos_hint={"x": .92, "center_y": .5325}, size_hint=(.95, .05), duration=.1)
+            anim2 = Animation(opacity=0, duration=.1)
+            anim2.start(self.ids.morselabel_upper)
             anim.start(self.ids.scroll_view)
+
         elif self.scrollview_no == 2:
             anim = Animation(pos_hint={"x": .92, "center_y": .25}, size_hint=(.95, .05), duration=.1)
+            anim2 = Animation(opacity=0, duration=.1)
+            anim2.start(self.ids.morselabel_lower)
             anim.start(self.ids.scroll_view2)
 
     def maximize_label(self):
         if self.scrollview_no == 1:
             anim = Animation(pos_hint={"x": .92, "center_y": .4325}, size_hint=(.95, .25), duration=.1)
+            anim2 = Animation(opacity=1, duration=.1)
+            anim2.start(self.ids.morselabel_upper)
             anim.start(self.ids.scroll_view)
+
         elif self.scrollview_no == 2:
             anim = Animation(pos_hint={"x": .92, "center_y": .15}, size_hint=(.95, .25), duration=.1)
+            anim2 = Animation(opacity=1, duration=.1)
+            anim2.start(self.ids.morselabel_lower)
             anim.start(self.ids.scroll_view2)
 
     def play_audio(self):

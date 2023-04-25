@@ -11,14 +11,13 @@
 <MorseLabel@Label>:
     markup: True
     color: 0, 0, 0, 1
-    font_size: 22#self.width / 10
+    font_size: self.width / 20
     text_size: self.width, None
     valign: "top"
     halign: "left"
     bold: True
     size_hint: self.width, None
     height: self.texture_size[1]
-    max_lines: 1
     hidden_text: ""
 
 <MainWidget>
@@ -99,10 +98,11 @@
                 cols: 1
                 pos: root.pos
                 height: self.minimum_height
+                padding: 25, 0, 50, 0
                 size_hint_y: None
 
                 MorseLabel:
-                    id: morselabel
+                    id: morselabel_upper
                     text: ""
 
 
@@ -114,7 +114,6 @@
             do_scroll_y: True
             size_hint: .95, .25
             pos_hint: {"center_x": .5, "center_y": .15}
-            # effect_cls: "ScrollEffect" # to disable "bouncing"
             canvas.before:
                 Color:
                     rgba: (1, 1, 1, .5)
@@ -126,8 +125,12 @@
                 id: scroll_layout2
                 cols: 1
                 pos: root.pos
+                padding: 25, 0, 50, 0
                 height: self.minimum_height
                 size_hint_y: None
+                MorseLabel:
+                    id: morselabel_lower
+                    text: ""
 
         Button:
             id: copy_morse_upper
@@ -136,7 +139,7 @@
             disabled: False
             halign: "center"
             valign: "middle"
-            on_release: Clipboard.copy(Clipboard.copy(morselabel.text))
+            on_release: Clipboard.copy(Clipboard.copy(morselabel_upper.text))
             pos_hint: {"x": .94, "center_y": .5325}
             size_hint: .03, .04
             background_color: 0, 0, 0, 0
@@ -272,11 +275,14 @@
 
             ToggleButton:
                 id: play_pause
+                disabled: True if upload_label.text == "No file selected" else False
                 text_size: self.size
                 font_size: self.width/5
                 halign: "center"
                 valign: "middle"
-                on_press: app.root.sound.play() if self.state != "normal" else app.root.sound.stop()
+                on_press: 
+                    app.root.sound.play() if self.state != "normal" else app.root.sound.stop();
+                    app.root.update_soundpos() if self.state != "normal" else app.root.update_soundpos.cancel()
                 # pos_hint: {"center_x": .325, "center_y": .625}
                 # size_hint: .07, .08
                 background_color: 0, 0, 0, 0
