@@ -328,11 +328,10 @@
             min: 0
             max: 1
             value_track: True
-            value: 0 #if upload_label.text == "No file selected" else app.root.current_screen.sound.position
+            value: 0 
             cursor_size: 25, 25
             size_hint: .5, .05
             pos_hint: {"center_x": .5, "center_y": .6}
-            #on_value: app.root.sound.track.seek(self.value)
             canvas.before:
                 Color:
                     rgba: 1, 1, 1, 0.25

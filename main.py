@@ -98,7 +98,6 @@ class DemorsifierScreen(Screen):
         self.sound = Sound()
         self.sound.load(translate_path)
         self.ids.audio_slider.max = self.sound.track.length
-        self.sound.play()
 
         timestamp_max = datetime.datetime.fromtimestamp(
             self.sound.track.length)
@@ -110,7 +109,10 @@ class DemorsifierScreen(Screen):
         timestamp_max = datetime.datetime.fromtimestamp(self.sound.track.length)
         timestamp_max = timestamp_max.strftime('%M:%S')
 
-        self.ids.track_position.text = f"{self.sound.get_current_position()} | {timestamp_max}"
+        if self.sound.get_current_position() != 0:
+            self.ids.track_position.text = f"{self.sound.get_current_position()} | {timestamp_max}"
+        else:
+            self.ids.track_position.text = f"{self.sound.get_current_position()} | {timestamp_max}"
 
         self.ids.audio_slider.value = self.sound.track.get_pos()
 
@@ -123,6 +125,7 @@ class DemorsifierScreen(Screen):
         timestamp_current = timestamp_current.strftime('%M:%S')
         self.highlighter()
         self.ids.track_position.text = f"{timestamp_current} | {timestamp_max}"
+
 
     def set_downtime(self, char):
 
