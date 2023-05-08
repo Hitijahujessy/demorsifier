@@ -79,6 +79,7 @@
             bold: True
             halign: "center"
             valign: "middle"
+            on_press: app.root.current_screen.sound.stop()
             on_release: root.show_load()
             pos_hint: {"center_x": .475, "center_y": .75}
             size_hint: .08, .09
