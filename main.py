@@ -95,9 +95,8 @@ class DemorsifierScreen(Screen):
         self.ids.morselabel_lower.hidden_text = translated_text
 
         self.sound.load(translate_path)
-        self.ids.audio_slider.max = self.sound.track.length
-        self.sound.play()
-        self.highlighter()
+        track_len = self.sound.track.length - 1
+        self.ids.audio_slider.max = track_len
 
         timestamp_max = datetime.datetime.fromtimestamp(
             self.sound.track.length)
@@ -110,19 +109,23 @@ class DemorsifierScreen(Screen):
             self.sound.track.length)
         timestamp_max = timestamp_max.strftime('%M:%S')
 
-        self.ids.track_position.text = f"{self.sound.get_current_position()} | {timestamp_max}"
+        if self.sound.get_current_position() != 0:
+            self.ids.track_position.text = f"{self.sound.get_current_position()} | {timestamp_max}"
+        else:
+            self.ids.track_position.text = f"{self.sound.get_current_position()} | {timestamp_max}"
 
         self.ids.audio_slider.value = self.sound.track.get_pos()
 
         # if self.sound.track.state == "stop":
         #     self.ids.play_pause.state = "normal"
 
-        self.update_soundpos()
+        
         timestamp_current = datetime.datetime.fromtimestamp(
             self.sound.track.get_pos())
         timestamp_current = timestamp_current.strftime('%M:%S')
         self.highlighter()
         self.ids.track_position.text = f"{timestamp_current} | {timestamp_max}"
+        self.update_soundpos()
 
     def highlight(self, dt):
 
@@ -330,12 +333,15 @@ class DemorsifierScreen(Screen):
         self.sound.stop()
 
     def resume_audio(self):
-        if self.pause_position != 0:
+        if self.pause_position == self.ids.audio_slider.max:
+            print("from the top")
             self.play_audio()
+            self.sound.set_position(0)
         elif self.ids.play_pause.state == "down":
-            # self.pause_audio()
-            # f self.sound.track.state == "stop":
-            self.sound.set_position(self.sound.track.get_pos())
+            #self.pause_audio()
+            #f self.sound.track.state == "stop":
+            # self.sound.set_position(self.sound.track.get_pos())
+            self.sound.set_position(self.pause_position)
             self.play_audio()
         elif self.ids.play_pause.state == "normal":
             self.pause_audio()

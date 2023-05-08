@@ -4,6 +4,7 @@
 #:import Clock kivy.clock
 #:import os os
 #:import webbrowser webbrowser
+
 <DemorsifierApp>:
     size: root.size
     pos: root.pos
@@ -78,6 +79,7 @@
             bold: True
             halign: "center"
             valign: "middle"
+            on_press: app.root.current_screen.sound.stop()
             on_release: root.show_load()
             pos_hint: {"center_x": .475, "center_y": .75}
             size_hint: .08, .09
@@ -152,10 +154,6 @@
                 size_hint_y: None
                 MorseLabel:
                     id: morselabel_lower
-                    text: ""
-
-                MorseLabel:
-                    id: morselabel2
                     text: ""
 
         Button:
@@ -331,11 +329,10 @@
             min: 0
             max: 1
             value_track: True
-            value: 0 #if upload_label.text == "No file selected" else app.root.current_screen.sound.position
+            value: 0 
             cursor_size: 25, 25
             size_hint: .5, .05
             pos_hint: {"center_x": .5, "center_y": .6}
-            #on_value: app.root.sound.track.seek(self.value)
             canvas.before:
                 Color:
                     rgba: 1, 1, 1, 0.25
