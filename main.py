@@ -337,10 +337,12 @@ class DemorsifierScreen(Screen):
     def resume_audio(self):
         if self.pause_position != 0:
             self.play_audio()
+            self.sound.set_position(self.pause_position)
         elif self.ids.play_pause.state == "down":
             #self.pause_audio()
             #f self.sound.track.state == "stop":
-            self.sound.set_position(self.sound.track.get_pos())
+            # self.sound.set_position(self.sound.track.get_pos())
+            self.sound.set_position(self.pause_position)
             self.play_audio()
         elif self.ids.play_pause.state == "normal":
             self.pause_audio()
