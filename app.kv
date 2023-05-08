@@ -4,7 +4,7 @@
 #:import Clock kivy.clock
 #:import os os
 #:import webbrowser webbrowser
-<MorsifierApp>:
+<DemorsifierApp>:
     size: root.size
     pos: root.pos
 
@@ -20,7 +20,29 @@
     height: self.texture_size[1]
     hidden_text: ""
 
-<MainWidget>
+<SpeedButton@Button>:
+    group: "speed_multiplier"
+    text: " "
+    on_release: app.root.current_screen.change_tempo(int(self.text)); app.root.current_screen.update_buttons()
+    background_color: 0, 0, 0, 0
+    canvas.before:
+        Color:
+            rgba: (0, .4, .66, 1) if self.state == "normal" else (0, .2, .46, 1)
+        RoundedRectangle:
+            size: self.size
+            pos: self.pos
+
+
+<MenuScreen>:
+    BoxLayout:
+        Button:
+            text: 'Go to morsifier'
+            on_press: root.manager.current = 'morsifier'
+        Button:
+            text: 'Go to demorsifier'
+            on_press: root.manager.current = 'demorsifier'
+
+<DemorsifierScreen>:
     upload_label: upload_label
     canvas.before:
         Color:
@@ -56,7 +78,7 @@
             bold: True
             halign: "center"
             valign: "middle"
-            on_release: app.root.show_load()
+            on_release: root.show_load()
             pos_hint: {"center_x": .475, "center_y": .75}
             size_hint: .08, .09
             background_color: 0, 0, 0, 0
@@ -132,6 +154,10 @@
                     id: morselabel_lower
                     text: ""
 
+                MorseLabel:
+                    id: morselabel2
+                    text: ""
+
         Button:
             id: copy_morse_upper
             text_size: self.size
@@ -162,8 +188,8 @@
             halign: "center"
             valign: "top"
             on_press: 
-                app.root.scrollview_no = 1; 
-                app.root.minimize_label() if self.state == "down" else app.root.maximize_label()
+                app.root.current_screen.scrollview_no = 1; 
+                app.root.current_screen.minimize_label() if self.state == "down" else app.root.current_screen.maximize_label()
             pos_hint: {"x": .90, "center_y": .5325}
             size_hint: .032, .042
             background_color: 0, 0, 0, 0
@@ -185,7 +211,7 @@
             disabled: False
             halign: "center"
             valign: "middle"
-            on_release: Clipboard.copy(app.root.clipboard)
+            on_release: Clipboard.copy(app.root.current_screen.clipboard)
             pos_hint: {"x": .94, "center_y": .25}
             size_hint: .03, .04
             background_color: 0, 0, 0, 0
@@ -208,8 +234,8 @@
             halign: "center"
             valign: "top"
             on_press: 
-                app.root.scrollview_no = 2;
-                app.root.minimize_label() if self.state == "down" else app.root.maximize_label()
+                app.root.current_screen.scrollview_no = 2;
+                app.root.current_screen.minimize_label() if self.state == "down" else app.root.current_screen.maximize_label()
             pos_hint: {"x": .9075, "center_y": .25}
             size_hint: .032, .042
             background_color: 0, 0, 0, 0
@@ -236,7 +262,7 @@
                 id: loop_toggle
                 #text: "Loop"
                 disabled: False
-                on_press: app.root.sound.toggle_loop()
+                on_press: app.root.current_screen.loop_toggle()
                 # pos_hint: {"center_x": .06, "center_y": .625}
                 # size_hint: .07, .08
                 background_color: 0, 0, 0, 0
@@ -258,7 +284,7 @@
                 disabled: False
                 halign: "center"
                 valign: "middle"
-                on_release: app.root.sound.mute() if self.state == "down" else app.root.sound.unmute()
+                on_release: app.root.current_screen.sound.mute() if self.state == "down" else app.root.current_screen.sound.unmute()
                 # pos_hint: {"center_x": .145, "center_y": .625}
                 # size_hint: .07, .08
                 background_color: 0, 0, 0, 0
@@ -305,7 +331,7 @@
             min: 0
             max: 1
             value_track: True
-            value: 0 #if upload_label.text == "No file selected" else app.root.sound.position
+            value: 0 #if upload_label.text == "No file selected" else app.root.current_screen.sound.position
             cursor_size: 25, 25
             size_hint: .5, .05
             pos_hint: {"center_x": .5, "center_y": .6}
@@ -391,5 +417,258 @@
                 text: "Load"
                 on_release: 
                     root.load(filechooser.path, filechooser.selection);
-                    app.root.upload_label.text = text_input.text;
-                    app.root.translate_to_morse()
+                    app.root.current_screen.upload_label.text = text_input.text;
+                    app.root.current_screen.translate_to_morse()
+
+
+<MorsifierScreen>:
+    canvas.before:
+        Color:
+            rgba: (.22, .22, .22, 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    FloatLayout:
+        size: root.size
+        pos: root.pos
+
+        Image:
+            id: logo
+            source: "./images/morsifier.png"
+            size_hint: .5, .5
+            pos_hint: {"center_x": .475, "center_y": .9}
+            color: (1, 1, 1, 1)
+
+        TextInput:
+            id: string_morsify
+            disabled: False
+            size_hint: .84, .1
+            font_size: "27sp"
+            pos_hint: {"center_x": .445, "center_y": .75}
+            foreground_color: 0, 0, 0, 1
+            background_color: (1, 1, 1, 1)
+            background_active: "./images/textinput_focus.png" #self.background_normal
+            background_normal: "./images/textinput_unfocus.png"
+            hint_text: "Type your message here..."
+            hint_text_color: 0, 0, 0, .45
+
+        Button:
+            id: proceed_button
+            text: "Proceed"
+            text_size: self.size
+            font_size: "18sp"
+            halign: "center"
+            valign: "middle"
+            disabled: True if string_morsify.text == "" else False
+            on_press: app.root.current_screen.text_string = string_morsify.text.upper(); app.root.current_screen.translate_to_morse()
+            on_release: app.root.current_screen.do_proceed(); copy_morse.disabled = False; self.disabled = True; string_morsify.disabled = True
+            size_hint: .1, .045
+            pos_hint: {"center_x": .925, "center_y": .778}
+            background_color: 0, 0, 0, 0
+            canvas.before:
+                Color:
+                    rgba: (0, .4, .66, 1) if self.state == "normal" else (0, .2, .46, 1)
+                RoundedRectangle:
+                    size: self.size
+                    pos: self.pos
+
+        Button:
+            id: reset_button
+            text: "Reset"
+            text_size: self.size
+            font_size: "18sp"
+            halign: "center"
+            valign: "middle"
+            on_press: app.root.current_screen.typewriter.cancel(); app.root.current_screen.morse_loop.cancel()
+            on_release: string_morsify.text = ""; string_morsify.disabled = False;  copy_morse.disabled = True; app.root.current_screen.delete_file(); app.root.current_screen.clipboard = ''; app.root.current_screen.delete_labels()
+            size_hint: .1, .045
+            pos_hint: {"center_x": .925, "center_y": .722}
+            background_color: 0, 0, 0, 0
+            canvas.before:
+                Color:
+                    rgba: (0, .4, .66, 1) if self.state == "normal" else (0, .2, .46, 1)
+                RoundedRectangle:
+                    size: self.size
+                    pos: self.pos
+
+
+        ScrollView:
+            id: scroll_view
+            do_scroll_x: False
+            do_scroll_y: True
+            size_hint: .95, .4
+            pos_hint: {"center_x": .5, "center_y": .25}
+            # effect_cls: "ScrollEffect" # to disable "bouncing"
+            canvas.before:
+                Color:
+                    rgba: 1, 1, 1, 0.5
+                RoundedRectangle:
+                    size: self.size
+                    pos: self.pos
+
+            GridLayout:
+                id: scroll_layout
+                cols: 1
+                pos: root.pos
+                height: self.minimum_height
+                size_hint_y: None
+
+        ToggleButton:
+            id: loop_toggle
+            #text: "Loop"
+            disabled: False
+            on_press:
+                app.root.current_screen.loop_toggle();
+            pos_hint: {"center_x": .06, "center_y": .625}
+            size_hint: .07, .08
+            background_color: 0, 0, 0, 0
+            canvas.before:
+                Color:
+                    rgba: (0, .4, .66, 1) if self.state == "normal" else (0, .2, .46, 1)
+                RoundedRectangle:
+                    size: self.size
+                    pos: self.pos   
+            Image:
+                source: "./images/icons/loop.png"
+                size: loop_toggle.size
+                pos: loop_toggle.x*1.045, loop_toggle.y
+                        
+
+        GridLayout:
+            id: button_grid
+            cols: 5
+            pos_hint: {"center_x": .8, "center_y": .575}
+            size_hint: .35, .17975
+            spacing: 22.78
+
+        ToggleButton:
+            id: morse_light
+            pos_hint: {"center_x": .4, "center_y": .575}
+            text: "turn on flashlight"
+            size_hint: .35, .17975
+            active: True
+            text: "Toggle flashlight" if self.state == "normal" else ""
+            background_color: (0, 0, 0, 0) if self.state == "normal" else (0,0,0,0)
+            canvas.before:
+                Color:
+                    rgba: (0, .4, .66, 1)
+                RoundedRectangle:
+                    size: self.size[0] // 2, self.size[1] // 2
+                    pos: self.pos[0] + self.size[0] // 4, self.pos[1] + self.size[1] //4
+                Color:
+                    rgba: root.flashlight_color if self.state == "down" else (0,0,0,0)
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                
+        
+        Button:
+            id: copy_morse
+            text_size: self.size
+            font_size: self.width/4
+            disabled: True
+            halign: "center"
+            valign: "middle"
+            on_release: Clipboard.copy(app.root.current_screen.clipboard)
+            pos_hint: {"center_x": .145, "center_y": .625}
+            size_hint: .07, .08
+            background_color: 0, 0, 0, 0
+            canvas.before:
+                Color:
+                    rgba: (0, .4, .66, 1) if self.state == "normal" else (0, .2, .46, 1)
+                RoundedRectangle:
+                    size: self.size
+                    pos: self.pos   
+            Image:
+                source: "./images/icons/copy.png"
+                size: copy_morse.size[0] *0.9, copy_morse.size[1] *0.9
+                pos: copy_morse.x*1.045, copy_morse.y*1
+
+
+        ToggleButton:
+            id: mute_sound
+            text_size: self.size
+            font_size: self.width/4
+            disabled: False
+            halign: "center"
+            valign: "middle"
+            on_release: app.root.current_screen.mute_sound();
+            pos_hint: {"center_x": .06, "center_y": .525}
+            size_hint: .07, .08
+            background_color: 0, 0, 0, 0
+            canvas.before:
+                Color:
+                    rgba: (0, .4, .66, 1) if self.state == "normal" else (0, .2, .46, 1)
+                RoundedRectangle:
+                    size: self.size
+                    pos: self.pos   
+            Image:
+                source: "./images/icons/unmute.png" if  mute_sound.state == "normal" else "./images/icons/mute.png"
+                size: mute_sound.size[0] *0.9, mute_sound.size[1] *0.9
+                pos: (mute_sound.x*1.25, mute_sound.y*1.005) if mute_sound.state == "normal" else (mute_sound.x*1.1125, mute_sound.y*1.005)
+
+
+        Button:
+            id: download_morse
+            text_size: self.size
+            font_size: self.width/5
+            halign: "center"
+            valign: "middle"
+            on_release: app.root.current_screen.show_save()
+            pos_hint: {"center_x": .145, "center_y": .525}
+            size_hint: .07, .08
+            background_color: 0, 0, 0, 0
+            canvas.before:
+                Color:
+                    rgba: (0, .4, .66, 1) if self.state == "normal" else (0, .2, .46, 1)
+                RoundedRectangle:
+                    size: self.size
+                    pos: self.pos   
+            Image:
+                source: "./images/icons/download.png"
+                size: download_morse.size[0] *0.9, download_morse.size[1] *0.9
+                pos: download_morse.x*1.025, download_morse.y*1.01
+
+
+        Button:
+            id: github
+            on_release: webbrowser.open("https://github.com/Hitijahujessy/morsifier")
+            size_hint: 0.07,0.08
+            pos_hint: {"x": .01, "top": .98}
+            background_color: 0, 0, 0, 0
+            canvas.after:
+                Color:
+                    rgba: (1, 1, 1, 1) if self.state == "normal" else (.8, .8, .8, 1)
+                Rectangle:
+                    pos: self.pos
+                    source: "./images/github-mark.png"
+                    size: github.size
+
+
+<SaveDialog>:
+    text_input: text_input
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+            on_selection: text_input.text = self.selection and self.selection[0] or ''
+
+        TextInput:
+            id: text_input
+            size_hint_y: None
+            height: 60
+            multiline: False
+
+        BoxLayout:
+            size_hint_y: None
+            height: 60
+            Button:
+                text: "Cancel"
+                on_release: root.cancel()
+
+            Button:
+                text: "Save"
+                on_release: root.save(filechooser.path, text_input.text)

@@ -5,6 +5,7 @@ import threading
 from collections import Counter
 import time
 from os.path import join as pjoin
+from itertools import chain
 
 import morse_translator as mt
 import numpy as np
@@ -93,11 +94,11 @@ class Sound():
     
     morse_string = None
     wpm = None
-    _time_unit = None
+    _time_unit = 12
     track = None
     path = None
     def __init__(self):
-        pass
+        self.load("sounds/sine0.wav")
 
     def __call__(self):
         return self.track
@@ -118,11 +119,12 @@ class Sound():
 
     def change_speed(self, wpm, playback_only = False):
         self.unload()
-        if not playback_only:
+        if not wpm == self.wpm:
             self._time_unit = self.wpm_to_time_unit(wpm)
             create_sounds(self._time_unit)
-            create_wav_file(self.morse_string)
-            self.load()
+        if not playback_only and self.morse_string:
+                create_wav_file(self.morse_string)
+                self.load()
 
     def set_morse_string(self, morse_string, wpm=None):
         self.morse_string = morse_string
@@ -180,23 +182,25 @@ class Sound():
         self.play()
 
     def mute(self):
-        self.track.volume = 0
+        if self.track:
+            self.track.volume = 0
 
     def unmute(self):
-        self.track.volume = 1
+        if self.track:
+            self.track.volume = 1
 
     def toggle_loop(self):
         if self.track.loop:
             self.track.loop = False
-            self.track.stop()
+            self.stop()
         elif not self.track.loop:
             self.track.loop = True
-            self.track.stop()
-            self.track.play()
+            self.stop()
+            self.play()
 
 
 class SoundTranslator():
-    def __init__(self, path: str):
+    def __init__(self, path: str= "sounds/morse_code.wav"):
         self.path = path
         self.name = path
         self.data, self.samplerate, self.length = None, None, None
@@ -209,6 +213,7 @@ class SoundTranslator():
         self.remove_wav_file()
 
     def transform_to_right_wav(self):
+        assert self.path
         data_dir = os.path.abspath(os.path.join(
             os.path.dirname(__file__), "sounds/imports"))
         old_wav = os.path.abspath(os.path.join(
@@ -220,9 +225,10 @@ class SoundTranslator():
         sf.write(new_wav, data, samplerate, subtype='PCM_16')
 
     def load(self, path=None):
-        if path is None:
-            self.transform_to_right_wav()
-            path = "sounds/imports/new.wav"
+        if path:
+            self.path = path
+        self.transform_to_right_wav()
+        path = "sounds/imports/new.wav"
 
         self.samplerate, self.data = wavfile.read(path)
         if len(self.data.shape) == 2:
@@ -265,10 +271,7 @@ class SoundTranslator():
     def transform_to_morse(self):
         if self.data is None:
             self.load()
-        start = time.time()
         self.thread()
-        end = time.time()
-        print(f"{end - start} thread seconds")
         self.silence_ticks_list = self.get_all_inbetween_parts()
         self.audio_time_list = self.ticks_to_time(self.audio_ticks_list)
         self.silence_time_list = self.ticks_to_time(self.silence_ticks_list)
@@ -515,3 +518,12 @@ class SoundTranslator():
         else:
             print("failed to delete: ", path)
             print("file not found")
+
+    def get_track_location(self, pos):
+        pos = pos * self.samplerate
+        zip_list, _ = zip(*self.silence_ticks_list)
+        zip_list_2, _ = zip(*self.audio_ticks_list)
+        chained_list = list(chain.from_iterable(zip(zip_list, zip_list_2)))
+        new_position = list(self.get_closest_to(chained_list, [pos]))[-1]
+        
+        return chained_list.index(new_position)

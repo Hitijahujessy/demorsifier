@@ -3,6 +3,8 @@ import time
 import numpy as np
 import pygame
 
+import morse_translator as mt
+
 def get_closest_to( arguments, values) -> list:
         # make sure array is a numpy array
         array = np.array(arguments)
@@ -119,21 +121,25 @@ class MorseMaker():
             self.track_to_morse_string()
     
     def track_to_morse_string(self) -> str:
-        morse_string = ""
+        self.morse_string = ""
         old_time = 0
+        end_time = 0
         for _dict in self.quantized_timing_list:
-            for time, code in _dict.items():
-                a = get_closest_to([self.dit, self.dit*3, self.dit*7], [time - old_time])[-1]
+            for start_time, code in _dict.items():
+                a = get_closest_to([self.dit, self.dit*3, self.dit*7], [start_time - old_time])[-1]
                 if a == self.dit:
-                    morse_string += ""
+                    self.morse_string += ""
+                    end_time = start_time + self.dit
                 elif a == self.dit*3:
-                    morse_string += " "
+                    self.morse_string += " "
+                    end_time = start_time + self.dit*3
                 else:
-                    morse_string += " / "
-                morse_string += code
-                old_time = time
+                    self.morse_string += " / "
+                    end_time = start_time + self.dit*7
+                self.morse_string += code
+                old_time = end_time
         
-        print(morse_string)
+        print(mt.translate(self.morse_string))
 
     def update_pygame(self, clock_obj, screen):
         clock_obj.tick(60)

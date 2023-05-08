@@ -9,3 +9,4 @@ pyvenv.cfg
 /sounds/
 __pycache__/
 .idea/
+morsifier/
