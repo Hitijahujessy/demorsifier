@@ -280,9 +280,12 @@
                 font_size: self.width/5
                 halign: "center"
                 valign: "middle"
+                # state: "down" if app.root.sound.track.state == "play" else "normal"
                 on_press: 
-                    app.root.sound.play() if self.state != "normal" else app.root.sound.stop();
-                    app.root.update_soundpos() if self.state != "normal" else app.root.update_soundpos.cancel()
+                    app.root.resume_audio() #if self.state != "down" else app.root.pause_audio();
+                    app.root.update_soundpos() if self.state != "normal" else app.root.update_soundpos.cancel();
+                    
+                    #app.root.sound.set_position(audio_slider.value)
                 # pos_hint: {"center_x": .325, "center_y": .625}
                 # size_hint: .07, .08
                 background_color: 0, 0, 0, 0
@@ -306,6 +309,7 @@
             cursor_size: 25, 25
             size_hint: .5, .05
             pos_hint: {"center_x": .5, "center_y": .6}
+            #on_value: app.root.sound.track.seek(self.value)
             canvas.before:
                 Color:
                     rgba: 1, 1, 1, 0.25
@@ -315,7 +319,7 @@
         Label:
             id: track_position
             text: "00:00 | 00:00"
-            pos_hint: {"center_x": .29, "center_y": .64}
+            pos_hint: {"center_x": .295, "center_y": .64}
             font_size: 24
             
 

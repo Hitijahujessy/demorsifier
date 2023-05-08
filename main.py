@@ -70,6 +70,7 @@ class MainWidget(Widget):
     downtime_sum = NumericProperty(0)
     flashlight_color = ObjectProperty((0, 0, 0, 1))
     upload_label = ObjectProperty()
+    pause_position = 0
 
     def __init__(self, **kwargs):
         super(MainWidget, self).__init__(**kwargs)
@@ -94,9 +95,8 @@ class MainWidget(Widget):
         print(translator.transform_to_morse())
         morse_code = translator.transform_to_morse()
         
-        # self.create_labels(morse_code)
-        # self.get_label()
-        self.ids.morselabel_upper.text = morse_code # Placeholder
+        self.ids.morselabel_upper.text = morse_code
+
         self.sound = Sound()
         self.sound.load(translate_path)
         self.ids.audio_slider.max = self.sound.track.length
@@ -109,12 +109,13 @@ class MainWidget(Widget):
     def update_timestamp(self, dt):
         timestamp_max = datetime.datetime.fromtimestamp(self.sound.track.length)
         timestamp_max = timestamp_max.strftime('%M:%S')
-        # timestamp_current = datetime.datetime.fromtimestamp(self.sound.get_current_position())
-        # timestamp_current = timestamp_current.strftime('%M:%S')
 
         self.ids.track_position.text = f"{self.sound.get_current_position()} | {timestamp_max}"
-        # print(f"{timestamp_current} | {timestamp_max}")
-        # print(f"timestamp_current: {timestamp_current} | soundpos: {self.sound.get_current_position()}")
+
+        self.ids.audio_slider.value = self.sound.track.get_pos()
+
+        # if self.sound.track.state == "stop":
+        #     self.ids.play_pause.state = "normal"
 
         self.update_soundpos()
 
@@ -433,8 +434,23 @@ class MainWidget(Widget):
         except Exception as e:
             print(e)
 
-    def update_slider(self, dt):
-        Clock.schedule_once()
+    def pause_audio(self):
+        self.pause_position = self.sound.track.get_pos()
+        self.sound.stop()
+
+    def resume_audio(self):
+        if self.pause_position != 0:
+            self.play_audio()
+        elif self.ids.play_pause.state == "down":
+            #self.pause_audio()
+            #f self.sound.track.state == "stop":
+            self.sound.set_position(self.sound.track.get_pos())
+            self.play_audio()
+        elif self.ids.play_pause.state == "normal":
+            self.pause_audio()
+            
+
+
 
 class SaveDialog(Widget):
     save = ObjectProperty()
