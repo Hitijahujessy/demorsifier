@@ -17,7 +17,7 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 import morse_code_sound as ms
 import morse_translator as mt
 from morse_code_sound import Sound, SoundTranslator
-from morsifier.main import MorsifierScreen
+from morsifier_main import MorsifierScreen
 
 kivy.require("2.1.0")
 
@@ -64,7 +64,6 @@ class DemorsifierScreen(Screen):
 
     def __init__(self, **kwargs):
         super(DemorsifierScreen, self).__init__(**kwargs)
-        self.morse_loop = Clock.create_trigger(self.repeat, self.downtime)
         self.test_sound = Sound()
         self.translator = SoundTranslator()
         self.highlighter = Clock.create_trigger(self.highlight, 0)
