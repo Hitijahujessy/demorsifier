@@ -308,8 +308,8 @@
                 valign: "middle"
                 # state: "down" if app.root.sound.track.state == "play" else "normal"
                 on_press: 
-                    app.root.resume_audio() #if self.state != "down" else app.root.pause_audio();
-                    app.root.update_soundpos() if self.state != "normal" else app.root.update_soundpos.cancel();
+                    app.root.current_screen.resume_audio() #if self.state != "down" else app.root.pause_audio();
+                    app.root.current_screen.update_soundpos() if self.state != "normal" else app.root.current_screen.update_soundpos.cancel();
                     
                     #app.root.sound.set_position(audio_slider.value)
                 # pos_hint: {"center_x": .325, "center_y": .625}
@@ -434,14 +434,14 @@
         pos: root.pos
 
         Image:
-            id: logo
+            id: logo_m
             source: "./images/morsifier.png"
             size_hint: .5, .5
             pos_hint: {"center_x": .475, "center_y": .9}
             color: (1, 1, 1, 1)
 
         TextInput:
-            id: string_morsify
+            id: string_morsify_m
             disabled: False
             size_hint: .84, .1
             font_size: "27sp"
@@ -454,15 +454,15 @@
             hint_text_color: 0, 0, 0, .45
 
         Button:
-            id: proceed_button
+            id: proceed_button_m
             text: "Proceed"
             text_size: self.size
             font_size: "18sp"
             halign: "center"
             valign: "middle"
-            disabled: True if string_morsify.text == "" else False
-            on_press: app.root.current_screen.text_string = string_morsify.text.upper(); app.root.current_screen.translate_to_morse()
-            on_release: app.root.current_screen.do_proceed(); copy_morse.disabled = False; self.disabled = True; string_morsify.disabled = True
+            disabled: True if string_morsify_m.text == "" else False
+            on_press: app.root.current_screen.text_string = string_morsify_m.text.upper(); app.root.current_screen.translate_to_morse()
+            on_release: app.root.current_screen.do_proceed(); copy_morse_m.disabled = False; self.disabled = True; string_morsify_m.disabled = True
             size_hint: .1, .045
             pos_hint: {"center_x": .925, "center_y": .778}
             background_color: 0, 0, 0, 0
@@ -474,14 +474,14 @@
                     pos: self.pos
 
         Button:
-            id: reset_button
+            id: reset_button_m
             text: "Reset"
             text_size: self.size
             font_size: "18sp"
             halign: "center"
             valign: "middle"
             on_press: app.root.current_screen.typewriter.cancel(); app.root.current_screen.morse_loop.cancel()
-            on_release: string_morsify.text = ""; string_morsify.disabled = False;  copy_morse.disabled = True; app.root.current_screen.delete_file(); app.root.current_screen.clipboard = ''; app.root.current_screen.delete_labels()
+            on_release: string_morsify_m.text = ""; string_morsify_m.disabled = False;  copy_morse_m.disabled = True; app.root.current_screen.delete_file(); app.root.current_screen.clipboard = ''; app.root.current_screen.delete_labels()
             size_hint: .1, .045
             pos_hint: {"center_x": .925, "center_y": .722}
             background_color: 0, 0, 0, 0
@@ -494,7 +494,7 @@
 
 
         ScrollView:
-            id: scroll_view
+            id: scroll_view_m
             do_scroll_x: False
             do_scroll_y: True
             size_hint: .95, .4
@@ -508,14 +508,14 @@
                     pos: self.pos
 
             GridLayout:
-                id: scroll_layout
+                id: scroll_layout_m
                 cols: 1
                 pos: root.pos
                 height: self.minimum_height
                 size_hint_y: None
 
         ToggleButton:
-            id: loop_toggle
+            id: loop_toggle_m
             #text: "Loop"
             disabled: False
             on_press:
@@ -531,19 +531,19 @@
                     pos: self.pos   
             Image:
                 source: "./images/icons/loop.png"
-                size: loop_toggle.size
-                pos: loop_toggle.x*1.045, loop_toggle.y
+                size: loop_toggle_m.size
+                pos: loop_toggle_m.x*1.045, loop_toggle_m.y
                         
 
         GridLayout:
-            id: button_grid
+            id: button_grid_m
             cols: 5
             pos_hint: {"center_x": .8, "center_y": .575}
             size_hint: .35, .17975
             spacing: 22.78
 
         ToggleButton:
-            id: morse_light
+            id: morse_light_m
             pos_hint: {"center_x": .4, "center_y": .575}
             text: "turn on flashlight"
             size_hint: .35, .17975
@@ -564,7 +564,7 @@
                 
         
         Button:
-            id: copy_morse
+            id: copy_morse_m
             text_size: self.size
             font_size: self.width/4
             disabled: True
@@ -582,18 +582,18 @@
                     pos: self.pos   
             Image:
                 source: "./images/icons/copy.png"
-                size: copy_morse.size[0] *0.9, copy_morse.size[1] *0.9
-                pos: copy_morse.x*1.045, copy_morse.y*1
+                size: copy_morse_m.size[0] *0.9, copy_morse_m.size[1] *0.9
+                pos: copy_morse_m.x*1.045, copy_morse_m.y*1
 
 
         ToggleButton:
-            id: mute_sound
+            id: mute_sound_m
             text_size: self.size
             font_size: self.width/4
             disabled: False
             halign: "center"
             valign: "middle"
-            on_release: app.root.current_screen.mute_sound();
+            on_release: app.root.current_screen.mute_sound_m();
             pos_hint: {"center_x": .06, "center_y": .525}
             size_hint: .07, .08
             background_color: 0, 0, 0, 0
@@ -604,13 +604,13 @@
                     size: self.size
                     pos: self.pos   
             Image:
-                source: "./images/icons/unmute.png" if  mute_sound.state == "normal" else "./images/icons/mute.png"
-                size: mute_sound.size[0] *0.9, mute_sound.size[1] *0.9
-                pos: (mute_sound.x*1.25, mute_sound.y*1.005) if mute_sound.state == "normal" else (mute_sound.x*1.1125, mute_sound.y*1.005)
+                source: "./images/icons/unmute.png" if  mute_sound_m.state == "normal" else "./images/icons/mute.png"
+                size: mute_sound_m.size[0] *0.9, mute_sound_m.size[1] *0.9
+                pos: (mute_sound_m.x*1.25, mute_sound_m.y*1.005) if mute_sound_m.state == "normal" else (mute_sound_m.x*1.1125, mute_sound_m.y*1.005)
 
 
         Button:
-            id: download_morse
+            id: download_morse_m
             text_size: self.size
             font_size: self.width/5
             halign: "center"
@@ -627,12 +627,12 @@
                     pos: self.pos   
             Image:
                 source: "./images/icons/download.png"
-                size: download_morse.size[0] *0.9, download_morse.size[1] *0.9
-                pos: download_morse.x*1.025, download_morse.y*1.01
+                size: download_morse_m.size[0] *0.9, download_morse_m.size[1] *0.9
+                pos: download_morse_m.x*1.025, download_morse_m.y*1.01
 
 
         Button:
-            id: github
+            id: github_m
             on_release: webbrowser.open("https://github.com/Hitijahujessy/morsifier")
             size_hint: 0.07,0.08
             pos_hint: {"x": .01, "top": .98}
@@ -643,7 +643,7 @@
                 Rectangle:
                     pos: self.pos
                     source: "./images/github-mark.png"
-                    size: github.size
+                    size: github_m.size
 
 
 <SaveDialog>:

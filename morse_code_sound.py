@@ -208,6 +208,7 @@ class SoundTranslator():
         self.dit, self.dah = [], []
         self.morse_text = None
         self.zero_buffer = 0
+        self.silent_dit = 0
 
     def __del__(self):
         self.remove_wav_file()
@@ -472,23 +473,23 @@ class SoundTranslator():
         """Takes the audio_time_list and silence_time_list and turns them into morse according to the current dit & dah values"""
 
         if farnsworth:
-            silent_dit = farnsworth
+            self.silent_dit = farnsworth
         else:
-            silent_dit = self.dit
+            self.silent_dit = self.dit
 
         # Transform the timing values to either dits or dahs (or word spacings for silent periods)
         nrml_audio_time_list = self.normalize_list(
             self.audio_time_list, [self.dit, self.dah])
         nrml_silence_time_list = self.normalize_list(
-            self.silence_time_list, [silent_dit, silent_dit*3, silent_dit*6])
+            self.silence_time_list, [self.silent_dit, self.silent_dit*3, self.silent_dit*6])
 
         morse_text = ""
         for audio, silence in zip(nrml_audio_time_list, nrml_silence_time_list):
             # if the silence is shorter than a dah do nothing
-            if silence == silent_dit:
+            if silence == self.silent_dit:
                 morse_text += ""
             # if silence is equal or longer than a dah and shorter than a dah+dit (should be 4xdit)
-            elif silence == silent_dit*3:
+            elif silence == self.silent_dit*3:
                 morse_text += " "
             else:
                 morse_text += " / "
@@ -527,3 +528,13 @@ class SoundTranslator():
         new_position = list(self.get_closest_to(chained_list, [pos]))[-1]
         
         return chained_list.index(new_position)
+    
+    def get_time_list(self):
+        zip_audio, _ = zip(*self.audio_ticks_list)
+        zip_silent = list(val if not end - val < (self.silent_dit*2) * self.samplerate else 0 for val, end in self.silence_ticks_list)
+        chained_list = list(chain.from_iterable(zip(zip_silent, zip_audio)))
+        return list((start / self.samplerate) for start in zip_audio)
+    
+    def get_silent_dit(self):
+        return self.silent_dit
+    

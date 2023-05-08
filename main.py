@@ -21,7 +21,6 @@ from morsifier_main import MorsifierScreen
 
 kivy.require("2.1.0")
 
-
 if "macOS" in platform.platform():
     root_widget = Builder.load_file('app.kv')
     os.environ["KIVY_AUDIO"] = "audio_sdl2"
@@ -61,17 +60,21 @@ class DemorsifierScreen(Screen):
     pause_position = 0
     translator = ObjectProperty()
     highlight_start_time = NumericProperty(0)
+    highlight_time_list = []
+    char_index = -1
+    time_index = -1
 
     def __init__(self, **kwargs):
         super(DemorsifierScreen, self).__init__(**kwargs)
-        self.test_sound = Sound()
+        self.sound = Sound()
         self.translator = SoundTranslator()
         self.highlighter = Clock.create_trigger(self.highlight, 0)
-        
+
         # v Testing stuff v
+        self.test_sound = Sound()
         self.test_sound.load("sounds/imports/w1aw-nov-09-80m-snip.wav")
         self.update_soundpos = Clock.create_trigger(self.update_timestamp, .1)
-        
+
         translator = SoundTranslator("sounds/imports/w1aw-nov-09-80m-snip.wav")
         morse_string = translator.transform_to_morse()
         print(morse_string)
@@ -84,21 +87,17 @@ class DemorsifierScreen(Screen):
         self.translator.load(translate_path)
         morse_code = self.translator.transform_to_morse()
 
-        self.ids.morselabel.text = morse_code  # Placeholder
-        self.ids.morselabel.hidden_text = morse_code
+        self.ids.morselabel_upper.text = morse_code  # Placeholder
+        self.ids.morselabel_upper.hidden_text = morse_code
         translated_text = mt.translate(morse_code)
         translated_text = translated_text.strip()
-        self.ids.morselabel2.text = translated_text
-        self.ids.morselabel2.hidden_text = translated_text
-        
-        
-        
-        self.ids.morselabel_upper.text = morse_code
+        self.ids.morselabel_lower.text = translated_text
+        self.ids.morselabel_lower.hidden_text = translated_text
 
-        self.sound = Sound()
         self.sound.load(translate_path)
         self.ids.audio_slider.max = self.sound.track.length
         self.sound.play()
+        self.highlighter()
 
         timestamp_max = datetime.datetime.fromtimestamp(
             self.sound.track.length)
@@ -107,7 +106,8 @@ class DemorsifierScreen(Screen):
         self.ids.track_position.text = f"00:00 | {timestamp_max}"
 
     def update_timestamp(self, dt):
-        timestamp_max = datetime.datetime.fromtimestamp(self.sound.track.length)
+        timestamp_max = datetime.datetime.fromtimestamp(
+            self.sound.track.length)
         timestamp_max = timestamp_max.strftime('%M:%S')
 
         self.ids.track_position.text = f"{self.sound.get_current_position()} | {timestamp_max}"
@@ -124,92 +124,86 @@ class DemorsifierScreen(Screen):
         self.highlighter()
         self.ids.track_position.text = f"{timestamp_current} | {timestamp_max}"
 
-    def set_downtime(self, char):
-
-        # The sound generator halves the time [ms.TIME_UNIT] when creating the file so we do it again here
-        try:
-            TIME_UNIT = self.sound._time_unit
-        except AttributeError:
-            TIME_UNIT = ms.TIME_UNIT / 2
-        if char == '.':
-            self.downtime = TIME_UNIT
-            self.downtime += TIME_UNIT
-        elif char == '-':
-            self.downtime = TIME_UNIT * 3
-            self.downtime += TIME_UNIT
-        elif char == ' ':
-            self.downtime = TIME_UNIT * 2
-        elif char == '/':
-            self.downtime = TIME_UNIT * 2
-
-    def get_downtime(self, char) -> float:
-        """Returns how much time it takes to go over given morse char"""
-        try:
-            TIME_UNIT = self.sound._time_unit
-        except AttributeError:
-            TIME_UNIT = ms.TIME_UNIT / 2
-        time = 0
-        if char == '.':
-            time = TIME_UNIT
-        elif char == '-':
-            time = TIME_UNIT * 3
-        elif char == ' ':
-            time = TIME_UNIT * 5
-        elif char == '/':
-            time = TIME_UNIT * 7
-        else:
-            return 0
-        return time
-
     def highlight(self, dt):
-        
+
+        # Set the starting variables
         if not self.highlight_start_time:
             self.highlight_start_time = time.time()
-        CURRENT_TIME = time.time() - self.highlight_start_time
-        CHAR_INDEX = self.translator.get_track_location(CURRENT_TIME)
-        print(CHAR_INDEX)
-        
-        morse_label = self.ids.morselabel
-        text_label = self.ids.morselabel2
+        if not self.highlight_time_list:
+            self.highlight_time_list = self.translator.get_time_list()
+        if self.char_index < 0 or self.char_index >= len(self.ids.morselabel_upper.hidden_text):
+            self.char_index = 0
+        if self.time_index < 0:
+            self.time_index = 0
 
+        CURRENT_TIME = time.time() - self.highlight_start_time
+        morse_label = self.ids.morselabel_upper
+        text_label = self.ids.morselabel_lower
         COLOR = "[color=ff0000]"
         COLOR_END = "[/color]"
-        next_word = 0
+
+        # create the timer for the next loop
+        time_pos = self.highlight_time_list[int(self.time_index)]
+        if time_pos is not self.highlight_time_list[-1]:
+            time_delta = time_pos - self.highlight_time_list[int(
+                self.time_index)-1]
+        else:
+            time_delta = 0
+        self.highlighter = Clock.create_trigger(self.highlight, time_delta)
+
+        # UPDATE MORSE LABEL
+        while morse_label.hidden_text[int(self.char_index)] == " ":
+            self.char_index+=1
         try:
-            morse_label.text = morse_label.hidden_text[:CHAR_INDEX] + COLOR + morse_label.hidden_text[CHAR_INDEX] + COLOR_END + morse_label.hidden_text[CHAR_INDEX+1:]
-            if morse_label.hidden_text[CHAR_INDEX] == "/":
-                next_word = 1
+            morse_label.text = morse_label.hidden_text[:int(self.char_index)] + COLOR + \
+                morse_label.hidden_text[int(self.char_index)] + COLOR_END + \
+                morse_label.hidden_text[int(self.char_index)+1:]
         except IndexError:
             """End of string reached"""
-        
-        
+        if morse_label.hidden_text[int(self.char_index)] == "/":
+            self.char_index +=1
+            self.time_index -=1
 
-        word_index = 0
+        # UPDATE TEXT LABEL
+
+        # count the spaces
+        i = morse_label.text.index("[")
+        space_count = len(
+            list(val for val in morse_label.hidden_text[:i] if val == "/"))
+
+        # get the first and end index for the word to highlight
+        split_hidden_text = text_label.hidden_text.split(" ")
         word_start = 0
-        split_text = text_label.text.split(" ")
-        for i, word in enumerate(split_text):
-            if COLOR not in text_label.text:
+        for i, word in enumerate(split_hidden_text):
+            if i == space_count:
                 break
-            if COLOR in word:
-                word_index = i + next_word
-                word_start = list(text_label.text).index("[")
-                break
-        
-        if COLOR in split_text[word_index]:
-            word_start -= len(COLOR)
-        if COLOR_END in split_text[word_index]:
-            word_start -= len(COLOR_END)
-        end_word = len(split_text[word_index]) + word_start
+            word_start += len(word) + 1
+        word_end = word_start + len(split_hidden_text[space_count])
 
+        # Update the label
         text_label.text = text_label.hidden_text[:word_start] + COLOR + \
-            text_label.hidden_text[word_start:end_word] + \
-            COLOR_END + text_label.hidden_text[end_word:]
-            
-        if CURRENT_TIME > len(self.translator.data):
-            self.highlight_start_time = 0
-            
+            text_label.hidden_text[word_start:word_end] + \
+            COLOR_END + text_label.hidden_text[word_end:]
+
+        # update the index to be the next one
+        self.char_index += 1
+        self.time_index += 1
+        
+        if self.time_index == len(self.highlight_time_list):
+            self.reset_highlight()
+
         if self.sound().state == "play":
             self.highlighter()
+        else:
+            self.reset_highlight()
+
+    def reset_highlight(self):
+        self.ids.morselabel_upper.text = self.ids.morselabel_upper.hidden_text
+        self.ids.morselabel_lower.text = self.ids.morselabel_lower.hidden_text
+        self.highlight_time_list = []
+        self.highlight_start_time = 0
+        self.char_index = -1
+        self.time_index = -1
 
     def scroll(self, label):
         self.ids.scroll_view.scroll_to(label)
@@ -264,8 +258,8 @@ class DemorsifierScreen(Screen):
 
     def delete_file(self, f="./sounds/morse_code.wav"):
         if os.path.exists(f):
-            if self.test_sound():
-                self.test_sound.unload()
+            if self.sound():
+                self.sound.unload()
             os.remove(f)
 
         else:
@@ -287,26 +281,30 @@ class DemorsifierScreen(Screen):
 
     def minimize_label(self):
         if self.scrollview_no == 1:
-            anim = Animation(pos_hint={"x": .92, "center_y": .5325}, size_hint=(.95, .05), duration=.1)
+            anim = Animation(
+                pos_hint={"x": .92, "center_y": .5325}, size_hint=(.95, .05), duration=.1)
             anim2 = Animation(opacity=0, duration=.1)
             anim2.start(self.ids.morselabel_upper)
             anim.start(self.ids.scroll_view)
 
         elif self.scrollview_no == 2:
-            anim = Animation(pos_hint={"x": .92, "center_y": .25}, size_hint=(.95, .05), duration=.1)
+            anim = Animation(
+                pos_hint={"x": .92, "center_y": .25}, size_hint=(.95, .05), duration=.1)
             anim2 = Animation(opacity=0, duration=.1)
             anim2.start(self.ids.morselabel_lower)
             anim.start(self.ids.scroll_view2)
 
     def maximize_label(self):
         if self.scrollview_no == 1:
-            anim = Animation(pos_hint={"x": .92, "center_y": .4325}, size_hint=(.95, .25), duration=.1)
+            anim = Animation(
+                pos_hint={"x": .92, "center_y": .4325}, size_hint=(.95, .25), duration=.1)
             anim2 = Animation(opacity=1, duration=.1)
             anim2.start(self.ids.morselabel_upper)
             anim.start(self.ids.scroll_view)
 
         elif self.scrollview_no == 2:
-            anim = Animation(pos_hint={"x": .92, "center_y": .15}, size_hint=(.95, .25), duration=.1)
+            anim = Animation(
+                pos_hint={"x": .92, "center_y": .15}, size_hint=(.95, .25), duration=.1)
             anim2 = Animation(opacity=1, duration=.1)
             anim2.start(self.ids.morselabel_lower)
             anim.start(self.ids.scroll_view2)
@@ -335,15 +333,12 @@ class DemorsifierScreen(Screen):
         if self.pause_position != 0:
             self.play_audio()
         elif self.ids.play_pause.state == "down":
-            #self.pause_audio()
-            #f self.sound.track.state == "stop":
+            # self.pause_audio()
+            # f self.sound.track.state == "stop":
             self.sound.set_position(self.sound.track.get_pos())
             self.play_audio()
         elif self.ids.play_pause.state == "normal":
             self.pause_audio()
-            
-
-
 
 
 class LoadDialog(Widget):
@@ -357,8 +352,8 @@ class DemorsifierApp(App):
     def build(self):
         sm = ScreenManager()
         sm.add_widget(MenuScreen(name="menu"))
-        sm.add_widget(MorsifierScreen(name="morsifier"))
         sm.add_widget(DemorsifierScreen(name="demorsifier"))
+        sm.add_widget(MorsifierScreen(name="morsifier"))
         return sm
 
 

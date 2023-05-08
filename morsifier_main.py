@@ -14,15 +14,6 @@ import shutil
 import kivy
 kivy.require("2.1.0")
 
-
-if "macOS" in platform.platform():
-    root_widget = Builder.load_file('app.kv')
-    os.environ["KIVY_AUDIO"] = "audio_sdl2"
-else:
-    # Enable to prevent OpenGL error
-    os.environ['KIVY_GL_BACKEND'] = 'angle_sdl2'
-    root_widget = Builder.load_file('app.kv')
-
 MORSE_CODE_DICT = {'A': '.-', 'B': '-...',
                    'C': '-.-.', 'D': '-..', 'E': '.',
                    'F': '..-.', 'G': '--.', 'H': '....',
@@ -41,8 +32,6 @@ MORSE_CODE_DICT = {'A': '.-', 'B': '-...',
                    '"': '.-..-.', '!': '-·-·--'}
 
 REVERSE_MORSE_DICT = {v: k for k, v in MORSE_CODE_DICT.items()}
-
-# threading multiprocessing
 
 
 class MorsifierScreen(Screen):
@@ -102,13 +91,13 @@ class MorsifierScreen(Screen):
 
         for i, string in enumerate(string_list):
             morse_label = Factory.MorseLabel()
-            self.ids.scroll_layout.add_widget(morse_label)
+            self.ids.scroll_layout_m.add_widget(morse_label)
             morse_label.hidden_text = ''.join(string)
             morse_label.id = "morse" + str(i)
 
     def get_label(self):
         """Returns a label if its displayed text is different than its hidden text"""
-        for label in reversed(self.ids.scroll_layout.children):
+        for label in reversed(self.ids.scroll_layout_m.children):
             if label.text == label.hidden_text:
                 continue
             # print(label.id)
@@ -116,13 +105,13 @@ class MorsifierScreen(Screen):
         print("no labels have a hidden text")
 
     def delete_labels(self):
-        temp = self.ids.scroll_layout.children[:]
+        temp = self.ids.scroll_layout_m.children[:]
         for label in temp:
-            self.ids.scroll_layout.remove_widget(label)
-        if len(self.ids.scroll_layout.children) == 0:
+            self.ids.scroll_layout_m.remove_widget(label)
+        if len(self.ids.scroll_layout_m.children) == 0:
             print("succesfully deleted all scroll labels")
         else:
-            for label in self.ids.scroll_layout.children:
+            for label in self.ids.scroll_layout_m.children:
                 print("failed to delete label:" + label.id)
 
     def create_buttons(self):
@@ -130,13 +119,13 @@ class MorsifierScreen(Screen):
         speed_list = [6, 8, 10, 12, 14, 16, 20, 22, 24, 26]
         for speed in speed_list:
             button = Factory.SpeedButton()
-            self.ids.button_grid.add_widget(button)
+            self.ids.button_grid_m.add_widget(button)
             button.text = str(speed)
 
     def update_buttons(self):
-        for button in self.ids.button_grid.children:
+        for button in self.ids.button_grid_m.children:
             button.disabled = False
-        for button in self.ids.button_grid.children:
+        for button in self.ids.button_grid_m.children:
             if button.text == str(self.test_sound.wpm):
                 button.disabled = True
                 break
@@ -165,9 +154,10 @@ class MorsifierScreen(Screen):
             self.set_downtime(label.text[-1])
             if label.text == label.hidden_text:
                 self.scroll(label)
-            if self.ids.morse_light.active == True:
+            if self.ids.morse_light_m.active == True:
                 if label.text[-1] == "." or label.text[-1] == "-":
-                    self.set_light_bar(self.get_downtime(label.text[-1])+self.test_sound._time_unit/6)
+                    self.set_light_bar(self.get_downtime(
+                        label.text[-1])+self.test_sound._time_unit/6)
 
             self.typewriter = Clock.create_trigger(
                 self.type_morse, self.downtime)
@@ -183,7 +173,7 @@ class MorsifierScreen(Screen):
 
         if self.test_sound().state == "stop":
             self.test_sound.restart()
-            self.scroll(self.ids.scroll_layout.children[-1])
+            self.scroll(self.ids.scroll_layout_m.children[-1])
 
         # Highlight the next character in red
         # t returns a string that tells you how it finished
@@ -196,35 +186,35 @@ class MorsifierScreen(Screen):
         except IndexError:
             self.downtime = 2
         self.morse_loop = Clock.create_trigger(self.repeat, self.downtime)
-        
 
         # Flash light if its active
-        if self.ids.morse_light.active is True:
+        if self.ids.morse_light_m.active is True:
             if self.morse_string[0] == "." or self.morse_string[0] == "-":
-                self.set_light_bar(self.get_downtime(self.morse_string[0])+self.test_sound._time_unit/6)
+                self.set_light_bar(self.get_downtime(
+                    self.morse_string[0])+self.test_sound._time_unit/6)
 
         # Remove the first character of the string
         self.morse_string = self.morse_string[1:]
         self.morse_loop()
-        
+
         # If the morse string is finished decide if it will loop again
         if len(self.morse_string) == 0:
             self.downtime = self.test_sound._time_unit * 7
             self.morse_loop.cancel()
             self.morse_loop = Clock.create_trigger(self.repeat, self.downtime)
             self.morse_loop()
-            if self.ids.loop_toggle.state == "down":
+            if self.ids.loop_toggle_m.state == "down":
                 self.morse_string = self.clipboard
             else:
                 self.morse_loop.cancel()
             # make sure the label texts are correctly set
-            for label in self.ids.scroll_layout.children:
+            for label in self.ids.scroll_layout_m.children:
                 label.text = label.hidden_text[:]
 
     def set_downtime(self, char):
 
         # The sound generator halves the time [ms.TIME_UNIT] when creating the file so we do it again here
-        try: 
+        try:
             TIME_UNIT = self.test_sound._time_unit
         except AttributeError:
             TIME_UNIT = ms.TIME_UNIT / 2
@@ -238,7 +228,7 @@ class MorsifierScreen(Screen):
             self.downtime = TIME_UNIT * 2
         elif char == '/':
             self.downtime = TIME_UNIT * 2
-            
+
     def get_downtime(self, char) -> float:
         """Returns how much time it takes to go over given morse char"""
         try:
@@ -267,23 +257,23 @@ class MorsifierScreen(Screen):
         if mute:
             self.test_sound.mute()
 
-        for label in self.ids.scroll_layout.children:
+        for label in self.ids.scroll_layout_m.children:
             if "[color" in label.text:
                 label.text = label.hidden_text
                 self.morse_loop.cancel()
                 self.check_loop()
                 break
             elif label.text != label.hidden_text and label.text != "":
-                for label in self.ids.scroll_layout.children:
+                for label in self.ids.scroll_layout_m.children:
                     label.text = ""
                 self.test_sound.restart()
                 print(self.test_sound().state)
                 break
 
     def highlight(self):
-        next_label = self.ids.scroll_layout.children[-1]
+        next_label = self.ids.scroll_layout_m.children[-1]
         do_next_label = False
-        for label in reversed(self.ids.scroll_layout.children):
+        for label in reversed(self.ids.scroll_layout_m.children):
             # Check which label the highlight is currently in
             if "[color=ff0000]" in label.text:
                 i = list(label.text).index("[") + 1
@@ -300,7 +290,7 @@ class MorsifierScreen(Screen):
                 self.scroll(label)
                 break
 
-        if len(self.ids.scroll_layout.children) > 0:
+        if len(self.ids.scroll_layout_m.children) > 0:
             if next_label.id == "morse0" and do_next_label is True:
                 return "Got to the end of the loop"
             else:
@@ -311,10 +301,10 @@ class MorsifierScreen(Screen):
             print("No scroll labels exist")
 
     def scroll(self, label):
-        self.ids.scroll_view.scroll_to(label)
+        self.ids.scroll_view_m.scroll_to(label)
 
     def set_light_bar(self, dt):
-        if self.ids.morse_light.state == "down":
+        if self.ids.morse_light_m.state == "down":
             if self.flashlight_color == (0, 0, 0, 1):
                 self.flashlight_color = (1, 1, 1, 1)
                 deactivate = Clock.schedule_once(self.set_light_bar, dt)
@@ -322,22 +312,22 @@ class MorsifierScreen(Screen):
                 self.flashlight_color = (0, 0, 0, 1)
 
     def loop_toggle(self):
-        check = self.ids.loop_toggle
+        check = self.ids.loop_toggle_m
         self.check_loop = Clock.create_trigger(self.activate_loop, 0)
         if check.state == "normal":
             self.loop = False
         elif check.state == "down":
             try:
-                self.scroll(self.ids.scroll_layout.children[-1])
+                self.scroll(self.ids.scroll_layout_m.children[-1])
             except IndexError:
                 pass
             self.check_loop()
 
     def activate_loop(self, dt):
         """Waits for the full morse string to appear on screen"""
-        if len(self.ids.scroll_layout.children) > 0:
+        if len(self.ids.scroll_layout_m.children) > 0:
             listx = [True if x.text ==
-                     x.hidden_text else False for x in self.ids.scroll_layout.children]
+                     x.hidden_text else False for x in self.ids.scroll_layout_m.children]
             if False in listx:
                 self.check_loop()
             else:
@@ -346,11 +336,11 @@ class MorsifierScreen(Screen):
                 self.morse_loop()
         else:
             self.check_loop()
-        if self.ids.loop_toggle.state == "normal":
+        if self.ids.loop_toggle_m.state == "normal":
             self.check_loop.cancel()
 
     def do_proceed(self):
-        if self.ids.scroll_layout.children[-1].text == '':
+        if self.ids.scroll_layout_m.children[-1].text == '':
             self.downtime = 0
             self.typewriter = Clock.create_trigger(
                 self.type_morse, self.downtime)
@@ -372,7 +362,7 @@ class MorsifierScreen(Screen):
             if self.test_sound():
                 self.test_sound.unload()
             os.remove(f)
-            
+
         else:
             print("failed to delete: ", f)
             print("file not found")
@@ -384,9 +374,8 @@ class MorsifierScreen(Screen):
         if os.path.exists("./sounds/morse_code.wav"):
             content = SaveDialog(save=self.save, cancel=self.dismiss_popup)
             self._popup = Popup(title="Save file", content=content,
-                            size_hint=(0.9, 0.9))
+                                size_hint=(0.9, 0.9))
             self._popup.open()
-        
 
     def save(self, path, filename):
         src_dir = "sounds/morse_code.wav"
