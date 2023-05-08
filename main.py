@@ -169,8 +169,8 @@ class DemorsifierScreen(Screen):
         CHAR_INDEX = self.translator.get_track_location(CURRENT_TIME)
         print(CHAR_INDEX)
         
-        morse_label = self.ids.morselabel
-        text_label = self.ids.morselabel2
+        morse_label = self.ids.morselabel_upper
+        text_label = self.ids.morselabel_lower
 
         COLOR = "[color=ff0000]"
         COLOR_END = "[/color]"
