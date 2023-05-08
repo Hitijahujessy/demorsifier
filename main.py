@@ -65,6 +65,7 @@ class DemorsifierScreen(Screen):
     def __init__(self, **kwargs):
         super(DemorsifierScreen, self).__init__(**kwargs)
         self.test_sound = Sound()
+        self.sound = Sound()
         self.translator = SoundTranslator()
         self.highlighter = Clock.create_trigger(self.highlight, 0)
         
@@ -84,16 +85,15 @@ class DemorsifierScreen(Screen):
         self.translator.load(translate_path)
         morse_code = self.translator.transform_to_morse()
 
-        self.ids.morselabel.text = morse_code  # Placeholder
-        self.ids.morselabel.hidden_text = morse_code
+        self.ids.morselabel_upper.text = morse_code  # Placeholder
+        self.ids.morselabel_upper.hidden_text = morse_code
         translated_text = mt.translate(morse_code)
         translated_text = translated_text.strip()
-        self.ids.morselabel2.text = translated_text
-        self.ids.morselabel2.hidden_text = translated_text
+        self.ids.morselabel_lower.text = translated_text
+        self.ids.morselabel_lower.hidden_text = translated_text
         
         
-        
-        self.ids.morselabel_upper.text = morse_code
+        #self.ids.morselabel_upper.text = morse_code
 
         self.sound = Sound()
         self.sound.load(translate_path)
