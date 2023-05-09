@@ -95,7 +95,7 @@ class DemorsifierScreen(Screen):
         self.ids.morselabel_lower.hidden_text = translated_text
 
         self.sound.load(translate_path)
-        track_len = self.sound.track.length - 1
+        track_len = self.sound.track.length
         self.ids.audio_slider.max = track_len
 
         timestamp_max = datetime.datetime.fromtimestamp(
@@ -116,16 +116,17 @@ class DemorsifierScreen(Screen):
 
         self.ids.audio_slider.value = self.sound.track.get_pos()
 
-        # if self.sound.track.state == "stop":
-        #     self.ids.play_pause.state = "normal"
-
+        if self.sound.track.state == "stop":
+            self.ids.play_pause.state = "normal"
+            self.ids.track_position.text = f"{timestamp_max} | {timestamp_max}"
+        else:
         
-        timestamp_current = datetime.datetime.fromtimestamp(
-            self.sound.track.get_pos())
-        timestamp_current = timestamp_current.strftime('%M:%S')
-        self.highlighter()
-        self.ids.track_position.text = f"{timestamp_current} | {timestamp_max}"
-        self.update_soundpos()
+            timestamp_current = datetime.datetime.fromtimestamp(
+                self.sound.track.get_pos())
+            timestamp_current = timestamp_current.strftime('%M:%S')
+            self.highlighter()
+            self.ids.track_position.text = f"{timestamp_current} | {timestamp_max}"
+            self.update_soundpos()
 
     def highlight(self, dt):
 
@@ -331,21 +332,27 @@ class DemorsifierScreen(Screen):
     def pause_audio(self):
         self.pause_position = self.sound.track.get_pos()
         self.sound.stop()
+        print(self.pause_position)
 
     def resume_audio(self):
-        if self.pause_position == self.ids.audio_slider.max:
-            print("from the top")
-            self.play_audio()
-            self.sound.set_position(0)
-        elif self.ids.play_pause.state == "down":
+
+         #self.pause_position == self.ids.audio_slider.max:
+        #     print("from the top")
+        #     self.play_audio()
+        #     
+        if self.ids.play_pause.state == "down":
             #self.pause_audio()
             #f self.sound.track.state == "stop":
             # self.sound.set_position(self.sound.track.get_pos())
-            self.sound.set_position(self.pause_position)
             self.play_audio()
+            self.sound.set_position(self.pause_position)
+            self.pause_position = 0
         elif self.ids.play_pause.state == "normal":
             self.pause_audio()
-
+            if self.pause_position == 0:
+                print("from the top")
+                self.play_audio()
+                self.sound.set_position(0)
 
 class LoadDialog(Widget):
     load = ObjectProperty()
