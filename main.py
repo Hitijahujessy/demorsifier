@@ -63,6 +63,7 @@ class DemorsifierScreen(Screen):
     highlight_time_list = []
     char_index = -1
     time_index = -1
+    mute = False
 
     def __init__(self, **kwargs):
         super(DemorsifierScreen, self).__init__(**kwargs)

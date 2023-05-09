@@ -297,7 +297,7 @@
                 disabled: False
                 halign: "center"
                 valign: "middle"
-                on_release: app.root.current_screen.sound.mute() if self.state == "down" else app.root.current_screen.sound.unmute()
+                on_press: app.root.current_screen.mute_sound()
                 background_color: 0, 0, 0, 0
                 canvas.before:
                     Color:
@@ -336,8 +336,10 @@
             min: 0
             max: 1
             value_track: True
+            disabled: True
             value: 0 
             cursor_size: 25, 25
+            cursor_disabled_image: "images/transparent.png"
             size_hint: .5, .05
             pos_hint: {"center_x": .5, "center_y": .6}
             canvas.before:
