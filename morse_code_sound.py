@@ -134,7 +134,7 @@ class Sound():
     def get_current_position(self):
         """Returns the current position in percentage form"""
         if self.track.state == "stop":
-            return 0
+            return str(0)
 
         percentage = self.track.get_pos() / self.track.length
         timestamp_current = datetime.datetime.fromtimestamp(self.track.get_pos())
@@ -162,20 +162,20 @@ class Sound():
     def unload(self):
         try:
             self.track.unload()
-        except:
+        except Exception:
             print("Couldnt unload track")
 
     def play(self):
         try:
             self.track.play()
-            print("Now playing with volume: " + str(self.track.volume))
-        except:
+            print("Now playing with volume: " + str(self.track.volume) + " from position: " + str(self.track.get_pos()))
+        except Exception:
             print("Couldnt play the track")
 
     def stop(self):
         try:
             self.track.stop()
-        except:
+        except Exception:
             print("Couldnt stop the track")
 
     def restart(self):
@@ -189,11 +189,11 @@ class Sound():
         if self.track:
             self.track.volume = 1
 
-    def toggle_loop(self):
-        if self.track.loop:
+    def toggle_loop(self, state = "both"):
+        if self.track.loop or state == "False":
             self.track.loop = False
             self.stop()
-        elif not self.track.loop:
+        elif not self.track.loop or state == "True":
             self.track.loop = True
             self.stop()
             self.play()

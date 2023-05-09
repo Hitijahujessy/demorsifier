@@ -180,7 +180,7 @@
             disabled: False
             halign: "center"
             valign: "middle"
-            on_release: Clipboard.copy(Clipboard.copy(morselabel_upper.text))
+            on_release: Clipboard.copy(Clipboard.copy(morselabel_upper.hidden_text))
             pos_hint: {"x": .94, "center_y": .5325}
             size_hint: .03, .04
             background_color: 0, 0, 0, 0
@@ -226,7 +226,7 @@
             disabled: False
             halign: "center"
             valign: "middle"
-            on_release: Clipboard.copy(app.root.current_screen.clipboard)
+            on_release: Clipboard.copy(morselabel_lower.hidden_text)
             pos_hint: {"x": .94, "center_y": .25}
             size_hint: .03, .04
             background_color: 0, 0, 0, 0
@@ -422,7 +422,6 @@
             Button:
                 text: "Load"
                 on_release: 
-                    root.load(filechooser.path, filechooser.selection);
                     app.root.current_screen.upload_label.hidden_text = text_input.text;
                     app.root.current_screen.upload_label.text = os.path.basename(text_input.text)
                     app.root.current_screen.translate_to_morse()

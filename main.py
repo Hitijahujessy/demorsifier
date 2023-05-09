@@ -48,31 +48,16 @@ MORSE_CODE_DICT = {'A': '.-', 'B': '-...',
 
 
 class DemorsifierScreen(Screen):
-    morse_string = ObjectProperty("")
-    text_string = ObjectProperty("")
-    clipboard = ObjectProperty("")
     loop = BooleanProperty(False)
-    sound = BooleanProperty(True)
-    downtime = NumericProperty(0)
-    downtime_sum = NumericProperty(0)
     flashlight_color = ObjectProperty((0, 0, 0, 1))
     upload_label = ObjectProperty()
     pause_position = 0
-    translator = ObjectProperty()
-    highlight_start_time = NumericProperty(0)
-    highlight_time_list = []
-    char_index = -1
-    time_index = -1
     mute = False
-    highlight_skip = False
-    highlight_skip2 = False
+    sound = Sound()
+    translator = SoundTranslator()
 
     def __init__(self, **kwargs):
         super(DemorsifierScreen, self).__init__(**kwargs)
-        self.sound = Sound()
-        self.translator = SoundTranslator()
-        #self.highlighter = Clock.create_trigger(self.highlight, 0)
-
         self.update_soundpos = Clock.create_trigger(self.update_timestamp, .1)
 
     def translate_to_morse(self):
@@ -117,101 +102,12 @@ class DemorsifierScreen(Screen):
             self.ids.track_position.text = f"00:00 | {timestamp_max}"
             self.ids.audio_slider.value = 0
         else:
-        
+
             timestamp_current = datetime.datetime.fromtimestamp(
                 self.sound.track.get_pos())
             timestamp_current = timestamp_current.strftime('%M:%S')
-            #self.highlighter()
             self.ids.track_position.text = f"{timestamp_current} | {timestamp_max}"
             self.update_soundpos()
-
-    def highlight(self, dt):
-
-        # Set the starting variables
-        if not self.highlight_start_time:
-            self.highlight_start_time = time.time()
-        if not self.highlight_time_list:
-            self.highlight_time_list = self.translator.get_time_list()
-        if self.char_index < 0 or self.char_index >= len(self.ids.morselabel_upper.hidden_text):
-            self.char_index = 0
-        if self.time_index < 0:
-            self.time_index = 0
-
-        morse_label = self.ids.morselabel_upper
-        text_label = self.ids.morselabel_lower
-        COLOR = "[color=ff0000]"
-        COLOR_END = "[/color]"
-
-        # create the timer for the next loop
-        time_pos = self.highlight_time_list[int(self.time_index)]
-        if time_pos is not self.highlight_time_list[-1]:
-            time_delta = time_pos - self.highlight_time_list[int(
-                self.time_index)-1]
-        else:
-            time_delta = 0
-        self.highlighter = Clock.create_trigger(self.highlight, time_delta)
-
-        # UPDATE MORSE LABEL
-        if not self.highlight_skip:
-            self.char_index += 1
-            highlight_skip2 = False
-        else:
-            self.char_index += 1
-            self.highlight_skip = False
-            highlight_skip2 = True
-        try:
-            morse_label.text = morse_label.hidden_text[:int(self.char_index)] + COLOR + \
-                morse_label.hidden_text[int(self.char_index)] + COLOR_END + \
-                morse_label.hidden_text[int(self.char_index)+1:]
-        except IndexError:
-            print("End of string highlighting reached")
-
-        try:
-            if highlight_skip2 is False:
-                if morse_label.hidden_text[int(self.char_index)+1] != " " or morse_label.hidden_text[int(self.char_index)+1] != "/":
-                    self.highlight_skip = True
-        except IndexError:
-            pass
-
-        # UPDATE TEXT LABEL
-
-        # count the spaces
-        i = morse_label.text.index("[")
-        space_count = len(
-            list(val for val in morse_label.hidden_text[:i] if val == "/"))
-
-        # get the first and end index for the word to highlight
-        split_hidden_text = text_label.hidden_text.split(" ")
-        word_start = 0
-        for i, word in enumerate(split_hidden_text):
-            if i == space_count:
-                break
-            word_start += len(word) + 1
-        word_end = word_start + len(split_hidden_text[space_count])
-
-        # Update the label
-        text_label.text = text_label.hidden_text[:word_start] + COLOR + \
-            text_label.hidden_text[word_start:word_end] + \
-            COLOR_END + text_label.hidden_text[word_end:]
-
-        # update the index
-        self.time_index += 1
-
-        if self.time_index == len(self.highlight_time_list):
-            self.reset_highlight()
-
-        if self.sound().state == "play":
-            self.highlighter()
-        else:
-            self.reset_highlight()
-
-    def reset_highlight(self):
-        self.ids.morselabel_upper.text = self.ids.morselabel_upper.hidden_text
-        self.ids.morselabel_lower.text = self.ids.morselabel_lower.hidden_text
-        self.highlight_time_list = []
-        self.highlight_start_time = 0
-        self.char_index = -1
-        self.time_index = -1
 
     def scroll(self, label):
         self.ids.scroll_view.scroll_to(label)
@@ -225,37 +121,36 @@ class DemorsifierScreen(Screen):
                 self.flashlight_color = (0, 0, 0, 1)
 
     def loop_toggle(self):
-        self.sound.toggle_loop()
         check = self.ids.loop_toggle
-        self.check_loop = Clock.create_trigger(self.activate_loop, 0)
+        self.check_loop = Clock.create_trigger(self.activate_loop, 0.1)
+        self.loop_update = Clock.create_trigger(self.update_loop, 0)
         if check.state == "normal":
             self.loop = False
+            self.sound.toggle_loop(state="False")
         elif check.state == "down":
             try:
                 self.scroll(self.ids.scroll_layout.children[0])
                 self.scroll(self.ids.scroll_layout2.children[0])
-            except IndexError:
-                pass
+            except IndexError as e:
+                print(e)
             self.check_loop()
+            self.loop_update()
 
     def activate_loop(self, dt):
         """Waits for the unaltered full morse string to appear on screen"""
-        if len(self.ids.scroll_layout.children) > 0:
-            listx = (True if x.text ==
-                     x.hidden_text else False for x in self.ids.scroll_layout.children)
-            if False in listx:
-                self.check_loop()
-            else:
-                self.morse_string = self.clipboard
-                self.loop = True
+        if self.ids.audio_slider.value >= self.sound.track.length*0.99:
+            self.loop = True
+            self.sound.toggle_loop(state="True")
+            self.ids.play_pause.state = "down"
         else:
             self.check_loop()
         if self.ids.loop_toggle.state == "normal":
             self.check_loop.cancel()
-
-    def do_proceed(self):
-        if self.ids.scroll_layout.children[-1].text == '':
-            self.downtime = 0
+            
+    def update_loop(self, dt):
+        if self.loop:
+            
+            self.loop_update()
 
     def mute_sound(self):
         if self.sound:
@@ -263,16 +158,6 @@ class DemorsifierScreen(Screen):
                 self.sound.mute()
             else:
                 self.sound.unmute()
-
-    def delete_file(self, f="./sounds/morse_code.wav"):
-        if os.path.exists(f):
-            if self.sound():
-                self.sound.unload()
-            os.remove(f)
-
-        else:
-            print("failed to delete: ", f)
-            print("file not found")
 
     def dismiss_popup(self):
         self._popup.dismiss()
@@ -282,10 +167,6 @@ class DemorsifierScreen(Screen):
         self._popup = Popup(title="Load file", content=content,
                             size_hint=(0.9, 0.9))
         self._popup.open()
-
-    def load(self, path, filename):
-
-        self.dismiss_popup()
 
     def minimize_label(self):
         if self.scrollview_no == 1:
@@ -319,17 +200,7 @@ class DemorsifierScreen(Screen):
 
     def play_audio(self):
         try:
-            self.sound = ms.Sound()
-            self.sound.load(self.ids.upload_label.hidden_text)
-
-        except Exception as e:
-            print(e)
-        try:
             self.sound.play()
-            while self.sound().state == "play":
-                self.ids.audio_slider.value = self.sound.get_current_position()
-                if self.ids.audio_slider.value > 0.99:
-                    break
         except Exception as e:
             print(e)
 
@@ -349,6 +220,7 @@ class DemorsifierScreen(Screen):
             if self.pause_position == 0:
                 self.play_audio()
                 self.sound.set_position(0)
+
 
 class LoadDialog(Widget):
     load = ObjectProperty()
@@ -371,4 +243,3 @@ class MenuScreen(Screen):
 
 
 DemorsifierApp().run()
-DemorsifierScreen().delete_file()
