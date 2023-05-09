@@ -118,7 +118,9 @@ class DemorsifierScreen(Screen):
 
         if self.sound.track.state == "stop":
             self.ids.play_pause.state = "normal"
-            self.ids.track_position.text = f"{timestamp_max} | {timestamp_max}"
+            self.sound.set_position(0)
+            self.ids.track_position.text = f"00:00 | {timestamp_max}"
+            self.ids.audio_slider.value = 0
         else:
         
             timestamp_current = datetime.datetime.fromtimestamp(
