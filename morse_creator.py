@@ -92,7 +92,7 @@ class MorseMaker():
             if _time - self._start >= self.dit*3:
                 self._end = _time
 
-            elif _time - self._start >= self.dit*1.5:
+            elif _time - self._start >= self.dit*1:
                 self.update_text("dah")
             else:
                 self.update_text("dit")

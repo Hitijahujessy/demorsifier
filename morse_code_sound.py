@@ -531,9 +531,25 @@ class SoundTranslator():
     
     def get_time_list(self):
         zip_audio, _ = zip(*self.audio_ticks_list)
-        zip_silent = list(val if not end - val < (self.silent_dit*2) * self.samplerate else 0 for val, end in self.silence_ticks_list)
+        zip_silent = list(val for val, end in self.silence_ticks_list) #if not end - val < (self.silent_dit*2) * self.samplerate)
+        
         chained_list = list(chain.from_iterable(zip(zip_silent, zip_audio)))
-        return list((start / self.samplerate) for start in zip_audio)
+        for i, val in enumerate(chained_list):
+            try:
+                time_val = (chained_list[i+1] - val)/ self.samplerate
+                if time_val < self.silent_dit*3:
+                    continue
+                if list(self.get_closest_to([self.silent_dit*3, self.silent_dit*6], [time_val]))[-1] == self.silent_dit*6:
+                    middle = (chained_list[i-1] + val + chained_list[i+1])/3
+                    lower = (middle + chained_list[i-1])/2
+                    upper = (middle + chained_list[i+1]) / 2
+                    chained_list.pop(i)
+                    chained_list.insert(i, upper)
+                    chained_list.insert(i, middle)
+                    chained_list.insert(i, lower)
+            except IndexError:
+                break
+        return list((start / self.samplerate) for start in chained_list)
     
     def get_silent_dit(self):
         return self.silent_dit

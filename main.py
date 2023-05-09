@@ -64,30 +64,24 @@ class DemorsifierScreen(Screen):
     char_index = -1
     time_index = -1
     mute = False
+    highlight_skip = False
+    highlight_skip2 = False
 
     def __init__(self, **kwargs):
         super(DemorsifierScreen, self).__init__(**kwargs)
         self.sound = Sound()
         self.translator = SoundTranslator()
-        self.highlighter = Clock.create_trigger(self.highlight, 0)
+        #self.highlighter = Clock.create_trigger(self.highlight, 0)
 
-        # v Testing stuff v
-        self.test_sound = Sound()
-        self.test_sound.load("sounds/imports/w1aw-nov-09-80m-snip.wav")
         self.update_soundpos = Clock.create_trigger(self.update_timestamp, .1)
-
-        translator = SoundTranslator("sounds/imports/w1aw-nov-09-80m-snip.wav")
-        morse_string = translator.transform_to_morse()
-        print(morse_string)
-        mt.translate(morse_string)
 
     def translate_to_morse(self):
         self.sound.unload()
         translate_path = self.ids.upload_label.hidden_text
 
         self.translator.load(translate_path)
-        morse_code = self.translator.transform_to_morse()
 
+        morse_code = self.translator.transform_to_morse()
         self.ids.morselabel_upper.text = morse_code  # Placeholder
         self.ids.morselabel_upper.hidden_text = morse_code
         translated_text = mt.translate(morse_code)
@@ -127,7 +121,7 @@ class DemorsifierScreen(Screen):
             timestamp_current = datetime.datetime.fromtimestamp(
                 self.sound.track.get_pos())
             timestamp_current = timestamp_current.strftime('%M:%S')
-            self.highlighter()
+            #self.highlighter()
             self.ids.track_position.text = f"{timestamp_current} | {timestamp_max}"
             self.update_soundpos()
 
@@ -143,7 +137,6 @@ class DemorsifierScreen(Screen):
         if self.time_index < 0:
             self.time_index = 0
 
-        CURRENT_TIME = time.time() - self.highlight_start_time
         morse_label = self.ids.morselabel_upper
         text_label = self.ids.morselabel_lower
         COLOR = "[color=ff0000]"
@@ -159,17 +152,26 @@ class DemorsifierScreen(Screen):
         self.highlighter = Clock.create_trigger(self.highlight, time_delta)
 
         # UPDATE MORSE LABEL
-        while morse_label.hidden_text[int(self.char_index)] == " ":
-            self.char_index+=1
+        if not self.highlight_skip:
+            self.char_index += 1
+            highlight_skip2 = False
+        else:
+            self.char_index += 1
+            self.highlight_skip = False
+            highlight_skip2 = True
         try:
             morse_label.text = morse_label.hidden_text[:int(self.char_index)] + COLOR + \
                 morse_label.hidden_text[int(self.char_index)] + COLOR_END + \
                 morse_label.hidden_text[int(self.char_index)+1:]
         except IndexError:
-            """End of string reached"""
-        if morse_label.hidden_text[int(self.char_index)] == "/":
-            self.char_index +=1
-            self.time_index -=1
+            print("End of string highlighting reached")
+
+        try:
+            if highlight_skip2 is False:
+                if morse_label.hidden_text[int(self.char_index)+1] != " " or morse_label.hidden_text[int(self.char_index)+1] != "/":
+                    self.highlight_skip = True
+        except IndexError:
+            pass
 
         # UPDATE TEXT LABEL
 
@@ -192,10 +194,9 @@ class DemorsifierScreen(Screen):
             text_label.hidden_text[word_start:word_end] + \
             COLOR_END + text_label.hidden_text[word_end:]
 
-        # update the index to be the next one
-        self.char_index += 1
+        # update the index
         self.time_index += 1
-        
+
         if self.time_index == len(self.highlight_time_list):
             self.reset_highlight()
 
