@@ -72,6 +72,26 @@
             color: (1, 1, 1, 1)
 
         Button:
+            id: menu_button
+            text: "Menu"
+            text_size: self.size
+            font_size: self.width/5
+            bold: True
+            halign: "center"
+            valign: "middle"
+            size_hint: .075, .075
+            pos_hint: {"x": .085, "top": .975}
+            on_press: 
+                app.root.current = "menu"
+            background_color: 0, 0, 0, 0
+            canvas.before:
+                Color:
+                    rgba: (0, .4, .66, 1) if self.state == "normal" else (0, .2, .46, 1)
+                RoundedRectangle:
+                    size: self.size
+                    pos: self.pos   
+
+        Button:
             id: upload_file
             text_size: self.size
             font_size: self.width/5
@@ -90,17 +110,14 @@
                 RoundedRectangle:
                     size: self.size
                     pos: self.pos   
-            # Image:
-            #     source: "./images/icons/download.png"
-            #     size: download_morse.size[0] *0.9, download_morse.size[1] *0.9
-            #     pos: download_morse.x*1.025, download_morse.y*1.01
             
         # Upload Label
         Label:
             id: upload_label
             text: "No file selected"
-            pos_hint: {"center_x": .475, "center_y": .81}
+            pos_hint: {"center_x": .475, "center_y": .815}
             font_size: 24
+            hidden_text: ""
 
         # Upper Label
         ScrollView:
@@ -261,8 +278,6 @@
                 #text: "Loop"
                 disabled: False
                 on_press: app.root.current_screen.loop_toggle()
-                # pos_hint: {"center_x": .06, "center_y": .625}
-                # size_hint: .07, .08
                 background_color: 0, 0, 0, 0
                 canvas.before:
                     Color:
@@ -283,8 +298,6 @@
                 halign: "center"
                 valign: "middle"
                 on_release: app.root.current_screen.sound.mute() if self.state == "down" else app.root.current_screen.sound.unmute()
-                # pos_hint: {"center_x": .145, "center_y": .625}
-                # size_hint: .07, .08
                 background_color: 0, 0, 0, 0
                 canvas.before:
                     Color:
@@ -299,19 +312,14 @@
 
             ToggleButton:
                 id: play_pause
-                disabled: True if upload_label.text == "No file selected" else False
+                disabled: True if upload_label.hidden_text == "" else False
                 text_size: self.size
                 font_size: self.width/5
                 halign: "center"
                 valign: "middle"
-                # state: "down" if app.root.sound.track.state == "play" else "normal"
                 on_press: 
                     app.root.current_screen.resume_audio() if self.state != "normal" else app.root.current_screen.pause_audio();
                     app.root.current_screen.update_soundpos() if self.state != "normal" else app.root.current_screen.update_soundpos.cancel();
-                    
-                    #app.root.sound.set_position(audio_slider.value)
-                # pos_hint: {"center_x": .325, "center_y": .625}
-                # size_hint: .07, .08
                 background_color: 0, 0, 0, 0
                 canvas.before:
                     Color:
@@ -325,7 +333,6 @@
                     pos: play_pause.x*1.06, play_pause.y*1.025
         Slider:
             id: audio_slider
-            # disabled: True if upload_label.text == "No file selected" else False
             min: 0
             max: 1
             value_track: True
@@ -414,7 +421,8 @@
                 text: "Load"
                 on_release: 
                     root.load(filechooser.path, filechooser.selection);
-                    app.root.current_screen.upload_label.text = text_input.text;
+                    app.root.current_screen.upload_label.hidden_text = text_input.text;
+                    app.root.current_screen.upload_label.text = os.path.basename(text_input.text)
                     app.root.current_screen.translate_to_morse()
 
 
@@ -436,6 +444,26 @@
             size_hint: .5, .5
             pos_hint: {"center_x": .475, "center_y": .9}
             color: (1, 1, 1, 1)
+
+        Button:
+            id: menu_button
+            text: "Menu"
+            text_size: self.size
+            font_size: self.width/5
+            bold: True
+            halign: "center"
+            valign: "middle"
+            size_hint: .075, .075
+            pos_hint: {"x": .085, "top": .975}
+            on_press: 
+                app.root.current = "menu"
+            background_color: 0, 0, 0, 0
+            canvas.before:
+                Color:
+                    rgba: (0, .4, .66, 1) if self.state == "normal" else (0, .2, .46, 1)
+                RoundedRectangle:
+                    size: self.size
+                    pos: self.pos   
 
         TextInput:
             id: string_morsify_m

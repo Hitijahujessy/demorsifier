@@ -82,7 +82,7 @@ class DemorsifierScreen(Screen):
 
     def translate_to_morse(self):
         self.sound.unload()
-        translate_path = self.ids.upload_label.text
+        translate_path = self.ids.upload_label.hidden_text
 
         self.translator.load(translate_path)
         morse_code = self.translator.transform_to_morse()
@@ -318,7 +318,7 @@ class DemorsifierScreen(Screen):
     def play_audio(self):
         try:
             self.sound = ms.Sound()
-            self.sound.load(self.ids.upload_label.text)
+            self.sound.load(self.ids.upload_label.hidden_text)
 
         except Exception as e:
             print(e)
@@ -338,21 +338,13 @@ class DemorsifierScreen(Screen):
 
     def resume_audio(self):
 
-         #self.pause_position == self.ids.audio_slider.max:
-        #     print("from the top")
-        #     self.play_audio()
-        #     
         if self.ids.play_pause.state == "down":
-            #self.pause_audio()
-            #f self.sound.track.state == "stop":
-            # self.sound.set_position(self.sound.track.get_pos())
             self.play_audio()
             self.sound.set_position(self.pause_position)
             self.pause_position = 0
         elif self.ids.play_pause.state == "normal":
             self.pause_audio()
             if self.pause_position == 0:
-                print("from the top")
                 self.play_audio()
                 self.sound.set_position(0)
 
