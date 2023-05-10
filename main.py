@@ -167,6 +167,10 @@ class DemorsifierScreen(Screen):
         self._popup = Popup(title="Load file", content=content,
                             size_hint=(0.9, 0.9))
         self._popup.open()
+    
+    def load(self):
+        
+        self.dismiss_popup()
 
     def minimize_label(self):
         if self.scrollview_no == 1:
