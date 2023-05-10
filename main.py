@@ -76,17 +76,22 @@ class DemorsifierScreen(Screen):
 
         self.sound.load(translate_path)
         track_len = self.sound.track.length
+        if track_len < 0:
+            track_len = self.translator.length
         self.ids.audio_slider.max = track_len
+        
 
         timestamp_max = datetime.datetime.fromtimestamp(
-            self.sound.track.length)
+            track_len)
         timestamp_max = timestamp_max.strftime('%M:%S')
 
         self.ids.track_position.text = f"00:00 | {timestamp_max}"
 
     def update_timestamp(self, dt):
-        timestamp_max = datetime.datetime.fromtimestamp(
-            self.sound.track.length)
+        track_len = self.sound.track.length
+        if track_len < 0:
+            track_len = self.translator.length
+        timestamp_max = datetime.datetime.fromtimestamp(track_len)
         timestamp_max = timestamp_max.strftime('%M:%S')
 
         if self.sound.get_current_position() != 0:
@@ -141,7 +146,6 @@ class DemorsifierScreen(Screen):
         if self.ids.audio_slider.value >= self.sound.track.length*0.99:
             self.loop = True
             self.sound.toggle_loop(state="True")
-            self.ids.play_pause.state = "down"
         else:
             self.check_loop()
         if self.ids.loop_toggle.state == "normal":
@@ -163,14 +167,10 @@ class DemorsifierScreen(Screen):
         self._popup.dismiss()
 
     def show_load(self):
-        content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
+        content = LoadDialog(load=self.dismiss_popup, cancel=self.dismiss_popup)
         self._popup = Popup(title="Load file", content=content,
                             size_hint=(0.9, 0.9))
         self._popup.open()
-    
-    def load(self):
-        
-        self.dismiss_popup()
 
     def minimize_label(self):
         if self.scrollview_no == 1:

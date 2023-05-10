@@ -10,7 +10,7 @@ from itertools import chain
 import morse_translator as mt
 import numpy as np
 import soundfile as sf
-from kivy.core.audio import SoundLoader
+from kivy.core.audio import SoundLoader, Sound as S
 from pydub import AudioSegment
 from scipy.io import wavfile
 import datetime
@@ -95,7 +95,7 @@ class Sound():
     morse_string = None
     wpm = None
     _time_unit = 12
-    track = None
+    track = S()
     path = None
     def __init__(self):
         self.load("sounds/sine0.wav")
@@ -192,11 +192,8 @@ class Sound():
     def toggle_loop(self, state = "both"):
         if self.track.loop or state == "False":
             self.track.loop = False
-            self.stop()
         elif not self.track.loop or state == "True":
             self.track.loop = True
-            self.stop()
-            self.play()
 
 
 class SoundTranslator():
