@@ -35,13 +35,29 @@
 
 
 <MenuScreen>:
-    BoxLayout:
+    FloatLayout:
         Button:
-            text: 'Go to morsifier'
-            on_press: root.manager.current = 'morsifier'
+            id: goto_m
+            text: 'Encipher text to morsecode'
+            on_press: root.manager.transition.direction = "right"; root.manager.current = 'morsifier'
+            size_hint: .5, 1
+            pos_hint: {"x": 0, "y": 0}
+        Image:
+            source: "images/morsifier.png"
+            size_hint: .5, .5
+            pos_hint: {"center_x": .2425, "y": .5}
         Button:
-            text: 'Go to demorsifier'
-            on_press: root.manager.current = 'demorsifier'
+            id: goto_d
+            text: 'Decipher an audio file that \ncontains morsecode'
+            halign: "center"
+            on_press: root.manager.transition.direction = "left"; root.manager.current = 'demorsifier'
+            size_hint: .5, 1
+            pos_hint: {"x": .5, "y": 0}
+        Image:
+            source: "images/demorsifier_logo.png"
+            size_hint: .45, .45
+            pos_hint: {"center_x": .75, "y": .535}
+            
 
 <DemorsifierScreen>:
     upload_label: upload_label
@@ -56,15 +72,15 @@
         size: root.size
         pos: root.pos
 
-        # Image:
-        #     id: logo
-        #     source: "./images/morsifier.png"
-        #     size_hint: .5, .5
-        #     pos_hint: {"center_x": .475, "center_y": .9}
-        #     color: (1, 1, 1, 1)
+        Image:
+            id: logo
+            source: "./images/demorsifier_logo.png"
+            size_hint: .5, .5
+            pos_hint: {"center_x": .475, "center_y": .935}
+            color: (1, 1, 1, 1)
         Label:
             id: logo
-            text: "DEMORSIFIER"
+            # text: "DEMORSIFIER"
             size_hint: .5, .5
             bold: True
             font_size: 72
@@ -79,9 +95,10 @@
             bold: True
             halign: "center"
             valign: "middle"
-            size_hint: .075, .075
-            pos_hint: {"x": .085, "top": .975}
+            size_hint: .0625, .075
+            pos_hint: {"x": .008, "top": .98}
             on_press: 
+                root.manager.transition.direction = "right";
                 app.root.current = "menu"
             background_color: 0, 0, 0, 0
             canvas.before:
@@ -90,6 +107,20 @@
                 RoundedRectangle:
                     size: self.size
                     pos: self.pos   
+
+        Button:
+            id: github
+            on_release: webbrowser.open("https://github.com/Hitijahujessy/morsifier")
+            size_hint: .058, .075
+            pos_hint: {"x": .935, "top": .983}
+            background_color: 0, 0, 0, 0
+            canvas.after:
+                Color:
+                    rgba: (1, 1, 1, 1) if self.state == "normal" else (.8, .8, .8, 1)
+                Rectangle:
+                    pos: self.pos
+                    source: "./images/github-mark.png"
+                    size: github.size  
 
         Button:
             id: upload_file
@@ -378,22 +409,6 @@
                 pos: morse_light.pos[0]*1.095, morse_light.pos[1] *1.0125  #copy_morse.x*1.045, copy_morse.y*1
 
 
-
-        Button:
-            id: github
-            on_release: webbrowser.open("https://github.com/Hitijahujessy/demorsifier")
-            size_hint: 0.07,0.08
-            pos_hint: {"x": .01, "top": .98}
-            background_color: 0, 0, 0, 0
-            canvas.after:
-                Color:
-                    rgba: (1, 1, 1, 1) if self.state == "normal" else (.8, .8, .8, 1)
-                Rectangle:
-                    pos: self.pos
-                    source: "./images/github-mark.png"
-                    size: github.size
-
-
 <LoadDialog>:
     text_input: text_input
     BoxLayout:
@@ -446,26 +461,6 @@
             size_hint: .5, .5
             pos_hint: {"center_x": .475, "center_y": .9}
             color: (1, 1, 1, 1)
-
-        Button:
-            id: menu_button
-            text: "Menu"
-            text_size: self.size
-            font_size: self.width/5
-            bold: True
-            halign: "center"
-            valign: "middle"
-            size_hint: .075, .075
-            pos_hint: {"x": .085, "top": .975}
-            on_press: 
-                app.root.current = "menu"
-            background_color: 0, 0, 0, 0
-            canvas.before:
-                Color:
-                    rgba: (0, .4, .66, 1) if self.state == "normal" else (0, .2, .46, 1)
-                RoundedRectangle:
-                    size: self.size
-                    pos: self.pos   
 
         TextInput:
             id: string_morsify_m
@@ -659,10 +654,31 @@
 
 
         Button:
+            id: menu_button_m
+            text: "Menu"
+            text_size: self.size
+            font_size: self.width/5
+            bold: True
+            halign: "center"
+            valign: "middle"
+            size_hint: .0625, .075
+            pos_hint: {"x": .008, "top": .98}
+            on_press: 
+                root.manager.transition.direction = "left";
+                app.root.current = "menu"
+            background_color: 0, 0, 0, 0
+            canvas.before:
+                Color:
+                    rgba: (0, .4, .66, 1) if self.state == "normal" else (0, .2, .46, 1)
+                RoundedRectangle:
+                    size: self.size
+                    pos: self.pos   
+
+        Button:
             id: github_m
             on_release: webbrowser.open("https://github.com/Hitijahujessy/morsifier")
-            size_hint: 0.07,0.08
-            pos_hint: {"x": .01, "top": .98}
+            size_hint: .058, .075
+            pos_hint: {"x": .935, "top": .983}
             background_color: 0, 0, 0, 0
             canvas.after:
                 Color:
