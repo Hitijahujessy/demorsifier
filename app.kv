@@ -384,29 +384,6 @@
             text: "00:00 | 00:00"
             pos_hint: {"center_x": .295, "center_y": .64}
             font_size: 24
-            
-
-        ToggleButton:
-            id: morse_light
-            pos_hint: {"center_x": .875, "center_y": .625}
-            size_hint: .2, .1
-            active: True
-            #text: "    Toggle flashlight" if self.state == "normal" else ""
-            background_color: (0, 0, 0, 0)
-            canvas.before:
-                Color:
-                    rgba: (0, .4, .66, 1)
-                RoundedRectangle:
-                    size: self.size #self.size[0] // 2, self.size[1] // 2
-                    pos: self.pos #self.pos[0] + self.size[0] // 4, self.pos[1] + self.size[1] //4
-                Color:
-                    rgba: root.flashlight_color if self.state == "down" else (0,0,0,0)
-                RoundedRectangle:
-                    pos: self.pos
-                    size: self.size
-            Image:
-                source: "./images/icons/flashlight_off.png" if morse_light.state=="normal" else "./images/icons/flashlight.png"
-                pos: morse_light.pos[0]*1.095, morse_light.pos[1] *1.0125  #copy_morse.x*1.045, copy_morse.y*1
 
 
 <LoadDialog>:
