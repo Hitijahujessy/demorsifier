@@ -6,7 +6,8 @@ pyvenv.cfg
 
 .wav
 .vscode/
-/sounds/
+/sounds/imports/
 __pycache__/
 .idea/
-morsifier/
+morse_creator.py
+sound_reader.py
