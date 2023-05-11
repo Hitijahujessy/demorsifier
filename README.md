@@ -6,9 +6,7 @@
 
 ## Description
 
-Morsifier is an application that allows users to translate text to morse code. The outputted morse code can be read, listened to and seen in the form of a simulated flashlight. The audiofiles containing the morse code can be saved to the user's computer.
-
-Morsifier currently only allows text-to-morse.
+Demorsifier is an application that allows users to translate audiofiles including morsecode to text. It also includes our previous project 'Morsifier'.
 
 
 ## Getting Started
@@ -19,6 +17,7 @@ Morsifier currently only allows text-to-morse.
 - Kivy
 - NumPy
 - Pydub
+- Soundfile
 
 ### Installing dependencies
 
