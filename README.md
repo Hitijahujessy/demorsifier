@@ -77,9 +77,6 @@ Playing audio may not work for some Mac users. Try using Python 3.8 to open the 
 
 <p><img src="images/screenshots/minimize_btn.png" alt="minimize button" width="30"> : Minimize the gray box by pressing this button.</p>
 
-
-<p><img src="images/README/downloadicon.png" alt="proceed button" width="30"> : The audio can also be saved to your computer. To do this, press the download button.</p>
-
 ### Video example
 Click on the image below to go to a Streamable video going over the program.<br /><br />
 <a href="https://streamable.com/e/31x0wz" title="Video example"><img src="images/README/ezgif.com-video-to-gif.gif" alt="A video example of the program in use. Links to a streamable.com page" height="370" width="400" /></a>
@@ -100,6 +97,5 @@ This project is licensed under the MIT License - see the LICENSE.md file for det
 
 ## Acknowledgements 
 
-<div> Download icon made by <a href="https://www.flaticon.com/authors/pixel-perfect" title="Pixel perfect"> Pixel perfect </a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
-<div> Loop icon made by <a href="https://www.flaticon.com/authors/icon-wind" title="icon wind"> icon wind </a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
-<div> Mute/Unmute/Copy icons made by <a href="https://www.freepik.com" title="Freepik"> Freepik </a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+<div> Icons made by <a href="https://www.flaticon.com/authors/pixel-perfect" title="Pixel perfect">Pixel perfect</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com, </a><a href="https://www.flaticon.com/authors/icon-wind" title="icon wind">icon wind</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com </a></div>
+<div><a href="https://www.freepik.com" title="Freepik">and Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
