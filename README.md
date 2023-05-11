@@ -1,8 +1,8 @@
 <div align="center">
-    <img width="450px" src="images/morsifier.png" />
+    <img width="450px" src="images/demorsifier_logo.png" />
 </div>
 
-<p align="center">A Kivy application to translate text to-, listen to- and download morsecode.</p>
+<p align="center">A Kivy application to decrypt morsecode from audio files</p>
 
 ## Description
 
@@ -18,6 +18,7 @@ Demorsifier is an application that allows users to translate audiofiles includin
 - NumPy
 - Pydub
 - Soundfile
+- SciPy
 
 ### Installing dependencies
 
@@ -37,13 +38,15 @@ Make sure to install the full dependency "kivy[full]":
 python -m pip install "kivy[full]"
 ```
 
-#### Install Numpy and pydub
+#### Install Numpy, Pydub and SciPy
 
 In your terminal type the following command (preferably inside your virtual environment):
 ```
 pip install numpy
 
 pip install pydub
+
+pip install scipy
 ```
 
 ## Usage
@@ -58,21 +61,24 @@ or
 ```
 python3.10 main.py
 ```
+Playing audio may not work for some Mac users. Try using Python 3.8 to open the app if this happens.
 
 ### Step-by-step
-<div align="center"><img src="images/mainscreen.png" alt="Screenshot of the window where 'Hello!' is translated to morse" width="400" height="370"></div>
-<p>There are only a few steps required to use Morsifier in it's most basic way. Type a message in the textbox, press <img src="images/README/proceedicon.png" alt="proceed button" width="50"> and the morse code will appear in the big gray box. The audio of the morse code will be played as well. When you're ready to write another message you can press <img src="images/README/reseticon.png" alt="proceed button" width="50">.</p>
+<div align="center"><img src="images/screenshots/demorsifier_nofile.png" alt="Screenshot of the window when no file is loaded" width="400" height="370"><img src="images/screenshots/demorsifier_loadedfile.png" alt="Screenshot of the window after loading a file" width="400" height="370"><img src="images/screenshots/demorsifier_minimize.png" alt="Screenshot of the window after pressing the minimize button" width="400" height="370"></div>
+<p>There are only a few steps required to use Demorsifier. Press <img src="images/screenshots/upload_btn.png" alt="upload button" width="50"> and choose the morse audio file that you want to decrypt. The morse code will appear in the upper gray box, the decrypted text will appear in the lower gray box. The audio of the morse code will be played as well.</p>
 
-<p><img src="images/README/loopicon.png" alt="proceed button" width="30"> : When this button is pressed, the morse code audio will loop and the code in the big gray box will be highlighted per character.</p>
-<p><img src="images/README/copyicon.png" alt="proceed button" width="30"> : Next to the loop button, you'll find the copy-to-clipboard button. When pressed , the morse code will be copied to your clipboard.</p>
+<p><img src="images/screenshots/loop_btn.png" alt="loop button" width="30"> : When this button is pressed, the morse code audio will loop.</p>
 
-<p><img src="images/README/muteicon.png" alt="proceed button" width="30"> : If you don't want the morse code to be played as audio you can press the mute button.</p>
+<p><img src="images/screenshots/mute_btn.png" alt="mute button" width="30"> : If you don't want the morse code to be played as audio you can press the mute button.</p>
+
+<p><img src="images/screenshots/play_btn.png" alt="play button" width="30"> : Press this button to start playing the morse audio.</p>
+
+<p><img src="images/screenshots/copy_btn.png" alt="copy button" width="30"> : Next to the loop button, you'll find the copy-to-clipboard button. When pressed , the text in the gray box will be copied to your clipboard.</p>
+
+<p><img src="images/screenshots/minimize_btn.png" alt="minimize button" width="30"> : Minimize the gray box by pressing this button.</p>
+
+
 <p><img src="images/README/downloadicon.png" alt="proceed button" width="30"> : The audio can also be saved to your computer. To do this, press the download button.</p>
-
-<p>You may also want to see what the morse code looks like if the message would be relayed using a flashlight. This is possible by pressing the toggle flashlight button, which looks like: </p>
-<img src="images/README/flashlighticon.png" alt="proceed button" width="90">
-
-<p>Next to the toggle flashlight button you'll find 10 numbered buttons. These numbers represent the words-per-minute (wpm). These buttons can be pressed to change the speed of the outputted morse code. When you download the morse code audio file, it will use the currently selected wpm.</p>
 
 ### Video example
 Click on the image below to go to a Streamable video going over the program.<br /><br />
