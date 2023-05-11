@@ -79,7 +79,7 @@ Playing audio may not work for some Mac users. Try using Python 3.8 to open the 
 
 ### Video example
 Click on the image below to go to a Streamable video going over the program.<br /><br />
-<a href="https://streamable.com/e/31x0wz" title="Video example"><img src="images/README/ezgif.com-video-to-gif.gif" alt="A video example of the program in use. Links to a streamable.com page" height="370" width="400" /></a>
+<a href="https://streamable.com/pw02pf" title="Video example"><img src="images/screenshots/ezgif.com-video-to-gif.gif" alt="A video example of the program in use. Links to a streamable.com page" height="370" width="400" /></a>
 
 ## Authors
 
